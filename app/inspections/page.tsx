@@ -102,6 +102,7 @@ export default function InspectionsPage() {
               {activeTab === 'checkout' ? (
                 <CheckOutForm
                   bookings={bookings}
+                  vehicles={vehicles}
                   submitting={submitting}
                   setSubmitting={setSubmitting}
                   message={message}
@@ -183,6 +184,7 @@ export default function InspectionsPage() {
 
 function CheckOutForm({
   bookings,
+  vehicles,
   submitting,
   setSubmitting,
   message,
@@ -190,6 +192,7 @@ function CheckOutForm({
   onSuccess
 }: {
   bookings: Booking[]
+  vehicles: Vehicle[]
   submitting: boolean
   setSubmitting: (value: boolean) => void
   message: { type: 'success' | 'error', text: string } | null
@@ -197,7 +200,7 @@ function CheckOutForm({
   onSuccess: () => void
 }) {
   const [formData, setFormData] = useState({
-    booking_id: '' as string,
+    booking_id: '',
     inspector_name: '',
     start_km: '',
     condition_notes: ''
@@ -437,7 +440,7 @@ function CheckInForm({
     }
   }
 
-  const inProgressVehicles = vehicles.filter(v => v.status === 'in_progress' || v.status === 'booked')
+  const inProgressVehicles = vehicles.filter(v => v.status === 'booked')
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">

@@ -209,7 +209,7 @@ export default function Reports() {
         ['Monthly Carwash Spend', '$' + monthlyCarwashSpend.toFixed(2)]
       ]
 
-      autoTable(doc, {
+      const summaryTable = autoTable(doc, {
         head: [['Category', 'Amount']],
         body: summaryData,
         startY: 50,
@@ -219,7 +219,8 @@ export default function Reports() {
 
       // Fines breakdown
       doc.setFontSize(12)
-      doc.text('Fines Breakdown', 14, doc.lastAutoTable.finalY + 15)
+      const summaryY = (summaryTable as any).finalY ? (summaryTable as any).finalY + 15 : 70
+      doc.text('Fines Breakdown', 14, summaryY)
 
       const finesData = fines.map(fine => {
         const vehicle = vehicles.find(v => v.id === fine.vehicle_id)
@@ -236,7 +237,7 @@ export default function Reports() {
       autoTable(doc, {
         head: [['Vehicle', 'Staff Email', 'Date', 'Amount', 'Status', 'Reason']],
         body: finesData,
-        startY: doc.lastAutoTable.finalY + 20,
+        startY: summaryY + 20,
         styles: { fontSize: 8 },
         headStyles: { fillColor: [239, 68, 68] }
       })
