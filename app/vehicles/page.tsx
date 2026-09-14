@@ -40,17 +40,21 @@ export default function VehiclesPage() {
     const mileageNeeded = kmUntilService <= 500 && kmUntilService > 0
     
     // Check if service date is within 7 days
-    const dateNeeded = vehicle.next_service_date && (() => {
+    let dateNeeded = false
+    if (vehicle.next_service_date) {
       const daysUntilService = Math.ceil((new Date(vehicle.next_service_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-      return daysUntilService <= 7 && daysUntilService > 0
-    })()
+      dateNeeded = daysUntilService <= 7 && daysUntilService > 0
+    }
     
     return mileageNeeded || dateNeeded
   }
 
   function isOverdueService(vehicle: Vehicle): boolean {
     const mileageOverdue = vehicle.current_mileage >= vehicle.next_service_mileage
-    const dateOverdue = vehicle.next_service_date && new Date(vehicle.next_service_date) < new Date()
+    let dateOverdue = false
+    if (vehicle.next_service_date) {
+      dateOverdue = new Date(vehicle.next_service_date) < new Date()
+    }
     return mileageOverdue || dateOverdue
   }
 
