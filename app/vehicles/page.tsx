@@ -37,11 +37,21 @@ export default function VehiclesPage() {
 
   function needsService(vehicle: Vehicle): boolean {
     const kmUntilService = vehicle.next_service_mileage - vehicle.current_mileage
-    return kmUntilService <= 500
+    const mileageNeeded = kmUntilService <= 500 && kmUntilService > 0
+    
+    // Check if service date is within 7 days
+    const dateNeeded = vehicle.next_service_date && (() => {
+      const daysUntilService = Math.ceil((new Date(vehicle.next_service_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+      return daysUntilService <= 7 && daysUntilService > 0
+    })()
+    
+    return mileageNeeded || dateNeeded
   }
 
   function isOverdueService(vehicle: Vehicle): boolean {
-    return vehicle.current_mileage >= vehicle.next_service_mileage
+    const mileageOverdue = vehicle.current_mileage >= vehicle.next_service_mileage
+    const dateOverdue = vehicle.next_service_date && new Date(vehicle.next_service_date) < new Date()
+    return mileageOverdue || dateOverdue
   }
 
   if (loading) {
@@ -349,6 +359,11 @@ function VehicleForm({
       onSuccess()
     } catch (error) {
       console.error('Error saving vehicle:', error)
+      console.error('Error details:', JSON.stringify(error, null, 2))
+      if (error instanceof Error) {
+        console.error('Error message:', error.message)
+        console.error('Error stack:', error.stack)
+      }
       setMessage({ type: 'error', text: 'Failed to save vehicle. Please try again.' })
     } finally {
       setSubmitting(false)
