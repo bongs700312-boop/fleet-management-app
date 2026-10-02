@@ -125,46 +125,38 @@ export default function BookingPage() {
     setMessage(null)
 
     try {
-      // Check for booking conflicts
-      const conflict = await checkBookingConflict(
-        formData.vehicle_id,
-        formData.start_date,
-        formData.end_date
-      )
-
-      if (conflict) {
-        const availableDate = new Date(conflict.availableAfter)
-        availableDate.setDate(availableDate.getDate() + 1) // Available the day after the conflicting booking ends
-        const formattedDate = availableDate.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
+      // Create booking via API (server-side validation)
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vehicle_id: formData.vehicle_id,
+          user_email: formData.user_email,
+          start_date: formData.start_date,
+          end_date: formData.end_date
         })
+      })
 
-        setMessage({
-          type: 'error',
-          text: `This vehicle is not available for the selected dates. It will be available starting from ${formattedDate}.`
-        })
+      const data = await response.json()
+
+      if (!response.ok) {
+        if (response.status === 409) {
+          // Conflict - vehicle not available
+          setMessage({
+            type: 'error',
+            text: data.error || 'This vehicle is not available for the selected dates.'
+          })
+        } else {
+          setMessage({
+            type: 'error',
+            text: data.error || 'Failed to submit booking. Please try again.'
+          })
+        }
         setSubmitting(false)
         return
       }
 
-      // Create booking
-      const { data: bookingData, error: bookingError } = await supabase
-        .from('bookings')
-        .insert({
-          vehicle_id: formData.vehicle_id,
-          user_email: formData.user_email,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          status: 'pending'
-        })
-        .select()
-
-      if (bookingError) throw bookingError
-
-      const booking = bookingData?.[0]
+      const booking = data.booking
 
       // Send email notification
       const emailResponse = await fetch('/api/email/booking', {
