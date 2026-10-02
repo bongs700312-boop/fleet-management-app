@@ -13,6 +13,7 @@ import {
   FileText,
   Calendar as CalendarIcon,
   Calendar,
+  Mail,
   Menu,
   X
 } from 'lucide-react'
@@ -20,6 +21,7 @@ import {
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Book a Vehicle', href: '/rules-booking', icon: BookOpen },
+  { name: 'My Pending Bookings', href: '/my-bookings', icon: Mail },
   { name: 'Booking Calendar', href: '/calendar', icon: CalendarIcon },
   { name: 'Booking Management', href: '/bookings', icon: Calendar },
   { name: 'Check-In/out Inspections', href: '/inspections', icon: ClipboardCheck },
