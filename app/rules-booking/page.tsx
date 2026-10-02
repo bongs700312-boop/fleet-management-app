@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
 import { Car, Calendar, Mail, CheckCircle, AlertCircle } from 'lucide-react'
@@ -15,6 +15,7 @@ export default function BookingPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [availabilityMessage, setAvailabilityMessage] = useState<string | null>(null)
   
   const [formData, setFormData] = useState({
     vehicle_id: '',
@@ -25,9 +26,78 @@ export default function BookingPage() {
 
   const supabase = createClient()
 
+  const checkBookingConflict = useCallback(async (vehicleId: string, startDate: string, endDate: string) => {
+    // Check for existing bookings that overlap with the requested date range
+    // Only consider bookings that are not rejected or completed
+    const { data: existingBookings, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('vehicle_id', vehicleId)
+      .in('status', ['pending', 'approved', 'in_progress'])
+
+    if (error) throw error
+
+    if (!existingBookings || existingBookings.length === 0) {
+      return null // No conflict
+    }
+
+    // Check for date overlap
+    // Two date ranges overlap if: (start1 <= end2) AND (end1 >= start2)
+    const requestedStart = new Date(startDate)
+    const requestedEnd = new Date(endDate)
+
+    for (const booking of existingBookings) {
+      const bookingStart = new Date(booking.start_date)
+      const bookingEnd = new Date(booking.end_date)
+
+      if (requestedStart <= bookingEnd && requestedEnd >= bookingStart) {
+        // Found a conflict
+        return {
+          conflict: true,
+          availableAfter: bookingEnd
+        }
+      }
+    }
+
+    return null // No conflict
+  }, [supabase])
+
   useEffect(() => {
     fetchRulesAndVehicles()
   }, [])
+
+  // Check availability when vehicle or dates change
+  useEffect(() => {
+    async function checkAvailability() {
+      if (formData.vehicle_id && formData.start_date && formData.end_date) {
+        const conflict = await checkBookingConflict(
+          formData.vehicle_id,
+          formData.start_date,
+          formData.end_date
+        )
+
+        if (conflict) {
+          const availableDate = new Date(conflict.availableAfter)
+          availableDate.setDate(availableDate.getDate() + 1)
+          const formattedDate = availableDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })
+          setAvailabilityMessage(
+            `Vehicle not available for these dates. Available from ${formattedDate}`
+          )
+        } else {
+          setAvailabilityMessage('Vehicle is available for these dates')
+        }
+      } else {
+        setAvailabilityMessage(null)
+      }
+    }
+
+    checkAvailability()
+  }, [formData.vehicle_id, formData.start_date, formData.end_date, checkBookingConflict])
 
   async function fetchRulesAndVehicles() {
     try {
@@ -55,6 +125,31 @@ export default function BookingPage() {
     setMessage(null)
 
     try {
+      // Check for booking conflicts
+      const conflict = await checkBookingConflict(
+        formData.vehicle_id,
+        formData.start_date,
+        formData.end_date
+      )
+
+      if (conflict) {
+        const availableDate = new Date(conflict.availableAfter)
+        availableDate.setDate(availableDate.getDate() + 1) // Available the day after the conflicting booking ends
+        const formattedDate = availableDate.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+
+        setMessage({
+          type: 'error',
+          text: `This vehicle is not available for the selected dates. It will be available starting from ${formattedDate}.`
+        })
+        setSubmitting(false)
+        return
+      }
+
       // Create booking
       const { data: bookingData, error: bookingError } = await supabase
         .from('bookings')
@@ -243,9 +338,19 @@ export default function BookingPage() {
               </div>
             </div>
 
+            {availabilityMessage && (
+              <div className={`p-3 rounded-lg text-sm ${
+                availabilityMessage.includes('not available')
+                  ? 'bg-orange-50 text-orange-800 border border-orange-200'
+                  : 'bg-green-50 text-green-800 border border-green-200'
+              }`}>
+                {availabilityMessage}
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || availabilityMessage?.includes('not available')}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               {submitting ? (
