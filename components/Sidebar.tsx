@@ -11,6 +11,7 @@ import {
   DollarSign, 
   Droplets, 
   FileText,
+  Calendar as CalendarIcon,
   Calendar,
   Menu,
   X
@@ -19,6 +20,7 @@ import {
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Book a Vehicle', href: '/rules-booking', icon: BookOpen },
+  { name: 'Booking Calendar', href: '/calendar', icon: CalendarIcon },
   { name: 'Booking Management', href: '/bookings', icon: Calendar },
   { name: 'Check-In/out Inspections', href: '/inspections', icon: ClipboardCheck },
   { name: 'Vehicles & Services', href: '/vehicles', icon: Car },
