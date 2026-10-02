@@ -3,19 +3,23 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
-import { Car, Calendar, Mail, CheckCircle, AlertCircle } from 'lucide-react'
+import { Car, Calendar, Mail, CheckCircle, AlertCircle, Edit, X } from 'lucide-react'
 
 type CompanyRule = Database['public']['Tables']['company_rules']['Row']
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
+type Booking = Database['public']['Tables']['bookings']['Row']
 
 export default function BookingPage() {
   const [rules, setRules] = useState<CompanyRule[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [userBookings, setUserBookings] = useState<Booking[]>([])
   const [acknowledged, setAcknowledged] = useState(false)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [availabilityMessage, setAvailabilityMessage] = useState<string | null>(null)
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
+  const [showMyBookings, setShowMyBookings] = useState(false)
   
   const [formData, setFormData] = useState({
     vehicle_id: '',
@@ -65,6 +69,61 @@ export default function BookingPage() {
   useEffect(() => {
     fetchRulesAndVehicles()
   }, [])
+
+  useEffect(() => {
+    if (formData.user_email) {
+      fetchUserBookings()
+    }
+  }, [formData.user_email])
+
+  async function fetchUserBookings() {
+    if (!formData.user_email) return
+    
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*, vehicles(*)')
+        .eq('user_email', formData.user_email)
+        .in('status', ['pending'])
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setUserBookings(data || [])
+    } catch (error) {
+      console.error('Error fetching user bookings:', error)
+    }
+  }
+
+  async function handleEditBooking(booking: Booking) {
+    setEditingBooking(booking)
+    setFormData({
+      vehicle_id: booking.vehicle_id,
+      user_email: booking.user_email,
+      start_date: booking.start_date,
+      end_date: booking.end_date
+    })
+    setAcknowledged(true)
+    setShowMyBookings(false)
+  }
+
+  async function handleDeleteBooking(bookingId: string) {
+    if (!confirm('Are you sure you want to cancel this booking?')) return
+
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .delete()
+        .eq('id', bookingId)
+
+      if (error) throw error
+
+      setMessage({ type: 'success', text: 'Booking cancelled successfully.' })
+      await fetchUserBookings()
+    } catch (error) {
+      console.error('Error deleting booking:', error)
+      setMessage({ type: 'error', text: 'Failed to cancel booking. Please try again.' })
+    }
+  }
 
   // Check availability when vehicle or dates change
   useEffect(() => {
@@ -125,65 +184,110 @@ export default function BookingPage() {
     setMessage(null)
 
     try {
-      // Create booking via API (server-side validation)
-      const response = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          vehicle_id: formData.vehicle_id,
-          user_email: formData.user_email,
-          start_date: formData.start_date,
-          end_date: formData.end_date
+      // Check for booking conflicts
+      const conflict = await checkBookingConflict(
+        formData.vehicle_id,
+        formData.start_date,
+        formData.end_date
+      )
+
+      if (conflict) {
+        const availableDate = new Date(conflict.availableAfter)
+        availableDate.setDate(availableDate.getDate() + 1)
+        const formattedDate = availableDate.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
         })
-      })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        if (response.status === 409) {
-          // Conflict - vehicle not available
-          setMessage({
-            type: 'error',
-            text: data.error || 'This vehicle is not available for the selected dates.'
-          })
-        } else {
-          setMessage({
-            type: 'error',
-            text: data.error || 'Failed to submit booking. Please try again.'
-          })
-        }
+        setMessage({
+          type: 'error',
+          text: `This vehicle is not available for the selected dates. It will be available starting from ${formattedDate}.`
+        })
         setSubmitting(false)
         return
       }
 
-      const booking = data.booking
+      if (editingBooking) {
+        // Update existing booking
+        const { error: updateError } = await supabase
+          .from('bookings')
+          .update({
+            vehicle_id: formData.vehicle_id,
+            start_date: formData.start_date,
+            end_date: formData.end_date
+          })
+          .eq('id', editingBooking.id)
 
-      // Send email notification
-      const emailResponse = await fetch('/api/email/booking', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          booking: booking,
-          vehicle: vehicles.find(v => v.id === formData.vehicle_id)
-        })
-      })
+        if (updateError) throw updateError
 
-      if (!emailResponse.ok) {
-        console.error('Email notification failed')
-      }
-
-      setMessage({ type: 'success', text: 'Booking submitted successfully! Confirmation email sent.' })
-      setFormData({ vehicle_id: '', user_email: '', start_date: '', end_date: '' })
-      
-      // Keep acknowledged true so the user can see the success message
-      // Reset after 3 seconds
-      setTimeout(() => {
+        setMessage({ type: 'success', text: 'Booking updated successfully!' })
+        setEditingBooking(null)
+        setFormData({ vehicle_id: '', user_email: '', start_date: '', end_date: '' })
         setAcknowledged(false)
-        setMessage(null)
-      }, 3000)
-      
-      // Refresh vehicles
-      await fetchRulesAndVehicles()
+        await fetchUserBookings()
+      } else {
+        // Create new booking via API (server-side validation)
+        const response = await fetch('/api/bookings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            vehicle_id: formData.vehicle_id,
+            user_email: formData.user_email,
+            start_date: formData.start_date,
+            end_date: formData.end_date
+          })
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          if (response.status === 409) {
+            setMessage({
+              type: 'error',
+              text: data.error || 'This vehicle is not available for the selected dates.'
+            })
+          } else {
+            setMessage({
+              type: 'error',
+              text: data.error || 'Failed to submit booking. Please try again.'
+            })
+          }
+          setSubmitting(false)
+          return
+        }
+
+        const booking = data.booking
+
+        // Send email notification
+        const emailResponse = await fetch('/api/email/booking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            booking: booking,
+            vehicle: vehicles.find(v => v.id === formData.vehicle_id)
+          })
+        })
+
+        if (!emailResponse.ok) {
+          console.error('Email notification failed')
+        }
+
+        setMessage({ type: 'success', text: 'Booking submitted successfully! Confirmation email sent.' })
+        setFormData({ vehicle_id: '', user_email: '', start_date: '', end_date: '' })
+        
+        // Keep acknowledged true so the user can see the success message
+        // Reset after 3 seconds
+        setTimeout(() => {
+          setAcknowledged(false)
+          setMessage(null)
+        }, 3000)
+        
+        // Refresh vehicles and user bookings
+        await fetchRulesAndVehicles()
+        await fetchUserBookings()
+      }
     } catch (error) {
       console.error('Error submitting booking:', error)
       setMessage({ type: 'error', text: 'Failed to submit booking. Please try again.' })
@@ -202,9 +306,19 @@ export default function BookingPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Book a Vehicle</h1>
-        <p className="text-gray-600 mt-2">Review company rules and book a vehicle</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Book a Vehicle</h1>
+          <p className="text-gray-600 mt-2">Review company rules and book a vehicle</p>
+        </div>
+        {formData.user_email && (
+          <button
+            onClick={() => setShowMyBookings(!showMyBookings)}
+            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            {showMyBookings ? 'Hide My Bookings' : 'View My Bookings'}
+          </button>
+        )}
       </div>
 
       {/* Company Rules Section */}
@@ -242,12 +356,72 @@ export default function BookingPage() {
         </div>
       </div>
 
+      {/* My Bookings Section */}
+      {showMyBookings && formData.user_email && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Calendar className="text-blue-500" size={20} />
+            My Pending Bookings
+          </h2>
+          
+          {userBookings.length === 0 ? (
+            <p className="text-gray-600">You have no pending bookings.</p>
+          ) : (
+            <div className="space-y-3">
+              {userBookings.map((booking: any) => (
+                <div key={booking.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-semibold">
+                          {booking.vehicles?.year} {booking.vehicles?.make} {booking.vehicles?.model}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          ({booking.vehicles?.license_plate})
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        <p>
+                          <strong>From:</strong> {new Date(booking.start_date).toLocaleDateString()}
+                        </p>
+                        <p>
+                          <strong>To:</strong> {new Date(booking.end_date).toLocaleDateString()}
+                        </p>
+                        <p>
+                          <strong>Status:</strong> {booking.status}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditBooking(booking)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit booking"
+                      >
+                        <Edit size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteBooking(booking.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Cancel booking"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Booking Form */}
       {acknowledged && (
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <Calendar className="text-blue-500" size={20} />
-            Book a Vehicle
+            {editingBooking ? 'Edit Booking' : 'Book a Vehicle'}
           </h2>
 
           {message && (
@@ -348,16 +522,31 @@ export default function BookingPage() {
               {submitting ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Submitting...
+                  {editingBooking ? 'Updating...' : 'Submitting...'}
                 </>
               ) : (
                 <>
                   <Car size={20} />
-                  Submit Booking Request
+                  {editingBooking ? 'Update Booking' : 'Submit Booking Request'}
                 </>
               )}
             </button>
           </form>
+        </div>
+      )}
+
+      {editingBooking && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <button
+            onClick={() => {
+              setEditingBooking(null)
+              setFormData({ vehicle_id: '', user_email: '', start_date: '', end_date: '' })
+              setAcknowledged(false)
+            }}
+            className="w-full bg-gray-200 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+          >
+            Cancel Edit
+          </button>
         </div>
       )}
 
