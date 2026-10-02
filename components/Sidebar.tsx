@@ -18,7 +18,7 @@ import {
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Rules & Booking', href: '/rules-booking', icon: BookOpen },
+  { name: 'Book a Vehicle', href: '/rules-booking', icon: BookOpen },
   { name: 'Booking Management', href: '/bookings', icon: Calendar },
   { name: 'Check-In/out Inspections', href: '/inspections', icon: ClipboardCheck },
   { name: 'Vehicles & Services', href: '/vehicles', icon: Car },
