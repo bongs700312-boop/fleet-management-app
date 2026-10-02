@@ -22,6 +22,7 @@ CREATE TABLE vehicles (
   next_service_mileage INTEGER NOT NULL DEFAULT 10000,
   last_service_date TIMESTAMP WITH TIME ZONE,
   next_service_date TIMESTAMP WITH TIME ZONE,
+  license_disk_expiry_date DATE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

@@ -69,6 +69,7 @@ export type Database = {
           next_service_mileage: number
           last_service_date: string | null
           next_service_date: string | null
+          license_disk_expiry_date: string | null
           created_at: string
           updated_at: string
         }
@@ -84,6 +85,7 @@ export type Database = {
           next_service_mileage?: number
           last_service_date?: string | null
           next_service_date?: string | null
+          license_disk_expiry_date?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -99,6 +101,7 @@ export type Database = {
           next_service_mileage?: number
           last_service_date?: string | null
           next_service_date?: string | null
+          license_disk_expiry_date?: string | null
           created_at?: string
           updated_at?: string
         }

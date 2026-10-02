@@ -236,7 +236,7 @@ function VehicleList({
                       </div>
                       <p className="text-sm text-gray-600 mb-3">License Plate: {vehicle.license_plate}</p>
                       
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                         <div>
                           <p className="text-gray-500">Current Mileage</p>
                           <p className="font-medium flex items-center gap-1">
@@ -264,6 +264,15 @@ function VehicleList({
                           }`}>
                             <Calendar size={16} />
                             {vehicle.next_service_date ? new Date(vehicle.next_service_date).toLocaleDateString() : 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500">License Disk Expiry</p>
+                          <p className={`font-medium flex items-center gap-1 ${
+                            vehicle.license_disk_expiry_date && new Date(vehicle.license_disk_expiry_date) < new Date() ? 'text-red-600' : 'text-gray-900'
+                          }`}>
+                            <Calendar size={16} />
+                            {vehicle.license_disk_expiry_date ? new Date(vehicle.license_disk_expiry_date).toLocaleDateString() : 'N/A'}
                           </p>
                         </div>
                       </div>
@@ -316,7 +325,8 @@ function VehicleForm({
     last_service_mileage: vehicle?.last_service_mileage || 0,
     next_service_mileage: vehicle?.next_service_mileage || 10000,
     last_service_date: vehicle?.last_service_date || '',
-    next_service_date: vehicle?.next_service_date || ''
+    next_service_date: vehicle?.next_service_date || '',
+    license_disk_expiry_date: vehicle?.license_disk_expiry_date || ''
   })
 
   const [submitting, setSubmitting] = useState(false)
@@ -339,7 +349,8 @@ function VehicleForm({
         last_service_mileage: Number(formData.last_service_mileage),
         next_service_mileage: Number(formData.next_service_mileage),
         last_service_date: formData.last_service_date || null,
-        next_service_date: formData.next_service_date || null
+        next_service_date: formData.next_service_date || null,
+        license_disk_expiry_date: formData.license_disk_expiry_date || null
       }
 
       let error
@@ -499,6 +510,25 @@ function VehicleForm({
                 type="date"
                 value={formData.next_service_date}
                 onChange={(e) => setFormData({ ...formData, next_service_date: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t pt-4 mt-4">
+          <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+            <Calendar size={20} />
+            License Information
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">License Disk Expiry Date</label>
+              <input
+                type="date"
+                value={formData.license_disk_expiry_date}
+                onChange={(e) => setFormData({ ...formData, license_disk_expiry_date: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
