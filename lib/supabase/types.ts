@@ -214,6 +214,50 @@ export type Database = {
           updated_at?: string
         }
       }
+      petrol_fillups: {
+        Row: {
+          id: string
+          vehicle_id: string
+          staff_name: string
+          fillup_date: string
+          amount: number
+          liters: number
+          price_per_liter: number
+          odometer_reading: number
+          fuel_station: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          vehicle_id: string
+          staff_name: string
+          fillup_date: string
+          amount: number
+          liters: number
+          price_per_liter: number
+          odometer_reading?: number
+          fuel_station?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          vehicle_id?: string
+          staff_name?: string
+          fillup_date?: string
+          amount?: number
+          liters?: number
+          price_per_liter?: number
+          odometer_reading?: number
+          fuel_station?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [key: string]: {

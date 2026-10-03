@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS carwashes CASCADE;
 DROP TABLE IF EXISTS fines CASCADE;
 DROP TABLE IF EXISTS inspections CASCADE;
 DROP TABLE IF EXISTS bookings CASCADE;
+DROP TABLE IF EXISTS petrol_fillups CASCADE;
 DROP TABLE IF EXISTS company_rules CASCADE;
 DROP TABLE IF EXISTS vehicles CASCADE;
 
@@ -88,6 +89,22 @@ CREATE TABLE carwashes (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create petrol_fillups table
+CREATE TABLE petrol_fillups (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  vehicle_id TEXT NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,
+  staff_name TEXT NOT NULL,
+  fillup_date DATE NOT NULL,
+  amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  liters DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  price_per_liter DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  odometer_reading INTEGER NOT NULL DEFAULT 0,
+  fuel_station TEXT,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_bookings_vehicle_id ON bookings(vehicle_id);
 CREATE INDEX idx_bookings_status ON bookings(status);
@@ -103,6 +120,9 @@ CREATE INDEX idx_fines_status ON fines(status);
 
 CREATE INDEX idx_carwashes_vehicle_id ON carwashes(vehicle_id);
 CREATE INDEX idx_carwashes_wash_date ON carwashes(wash_date);
+
+CREATE INDEX idx_petrol_fillups_vehicle_id ON petrol_fillups(vehicle_id);
+CREATE INDEX idx_petrol_fillups_fillup_date ON petrol_fillups(fillup_date);
 
 -- Insert sample company rule
 INSERT INTO company_rules (title, description)

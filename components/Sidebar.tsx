@@ -14,6 +14,7 @@ import {
   Calendar as CalendarIcon,
   Calendar,
   Mail,
+  Fuel,
   Menu,
   X
 } from 'lucide-react'
@@ -26,6 +27,7 @@ const navigation = [
   { name: 'Booking Management', href: '/bookings', icon: Calendar },
   { name: 'Check-In/out Inspections', href: '/inspections', icon: ClipboardCheck },
   { name: 'Vehicles & Services', href: '/vehicles', icon: Car },
+  { name: 'Petrol Fillups', href: '/petrol', icon: Fuel },
   { name: 'Fines', href: '/fines', icon: DollarSign },
   { name: 'Carwash', href: '/carwash', icon: Droplets },
   { name: 'Executive Reports', href: '/reports', icon: FileText },
