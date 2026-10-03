@@ -5,10 +5,10 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = createClient()
     const body = await request.json()
-    const { vehicle_id, user_email, start_date, end_date } = body
+    const { vehicle_id, user_email, start_date, end_date, start_time, end_time } = body
 
     // Validate required fields
-    if (!vehicle_id || !user_email || !start_date || !end_date) {
+    if (!vehicle_id || !user_email || !start_date || !end_date || !start_time || !end_time) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -29,20 +29,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check for date overlap
-    const requestedStart = new Date(start_date)
-    const requestedEnd = new Date(end_date)
+    // Check for date and time overlap
+    const requestedStart = new Date(`${start_date}T${start_time}`)
+    const requestedEnd = new Date(`${end_date}T${end_time}`)
 
     if (existingBookings && existingBookings.length > 0) {
       for (const booking of existingBookings) {
-        const bookingStart = new Date(booking.start_date)
-        const bookingEnd = new Date(booking.end_date)
+        const bookingStart = new Date(`${booking.start_date}T${booking.start_time}`)
+        const bookingEnd = new Date(`${booking.end_date}T${booking.end_time}`)
 
         if (requestedStart <= bookingEnd && requestedEnd >= bookingStart) {
           // Found a conflict
-          const availableDate = new Date(bookingEnd)
-          availableDate.setDate(availableDate.getDate() + 1)
-          const formattedDate = availableDate.toLocaleDateString('en-US', {
+          const formattedTime = bookingEnd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+          const formattedDate = bookingEnd.toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -51,8 +50,8 @@ export async function POST(request: NextRequest) {
 
           return NextResponse.json(
             { 
-              error: 'Vehicle not available for these dates',
-              availableAfter: formattedDate
+              error: 'Vehicle not available for these times',
+              availableAfter: `${formattedDate} at ${formattedTime}`
             },
             { status: 409 }
           )
@@ -68,6 +67,8 @@ export async function POST(request: NextRequest) {
         user_email,
         start_date,
         end_date,
+        start_time,
+        end_time,
         status: 'pending'
       })
       .select()

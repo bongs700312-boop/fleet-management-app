@@ -35,6 +35,8 @@ CREATE TABLE bookings (
   user_email TEXT NOT NULL,
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
+  start_time TIME NOT NULL DEFAULT '09:00:00',
+  end_time TIME NOT NULL DEFAULT '17:00:00',
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'completed', 'in_progress')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

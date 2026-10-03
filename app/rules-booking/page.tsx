@@ -21,12 +21,14 @@ export default function BookingPage() {
     vehicle_id: '',
     user_email: '',
     start_date: '',
-    end_date: ''
+    end_date: '',
+    start_time: '09:00',
+    end_time: '17:00'
   })
 
   const supabase = createClient()
 
-  const checkBookingConflict = useCallback(async (vehicleId: string, startDate: string, endDate: string) => {
+  const checkBookingConflict = useCallback(async (vehicleId: string, startDate: string, endDate: string, startTime: string, endTime: string) => {
     const { data: existingBookings, error } = await supabase
       .from('bookings')
       .select('*')
@@ -39,13 +41,15 @@ export default function BookingPage() {
       return null
     }
 
-    const requestedStart = new Date(startDate)
-    const requestedEnd = new Date(endDate)
+    // Combine date and time for accurate comparison
+    const requestedStart = new Date(`${startDate}T${startTime}`)
+    const requestedEnd = new Date(`${endDate}T${endTime}`)
 
     for (const booking of existingBookings) {
-      const bookingStart = new Date(booking.start_date)
-      const bookingEnd = new Date(booking.end_date)
+      const bookingStart = new Date(`${booking.start_date}T${booking.start_time}`)
+      const bookingEnd = new Date(`${booking.end_date}T${booking.end_time}`)
 
+      // Check for time overlap on the same date
       if (requestedStart <= bookingEnd && requestedEnd >= bookingStart) {
         return {
           conflict: true,
@@ -63,16 +67,18 @@ export default function BookingPage() {
 
   useEffect(() => {
     async function checkAvailability() {
-      if (formData.vehicle_id && formData.start_date && formData.end_date) {
+      if (formData.vehicle_id && formData.start_date && formData.end_date && formData.start_time && formData.end_time) {
         const conflict = await checkBookingConflict(
           formData.vehicle_id,
           formData.start_date,
-          formData.end_date
+          formData.end_date,
+          formData.start_time,
+          formData.end_time
         )
 
         if (conflict) {
           const availableDate = new Date(conflict.availableAfter)
-          availableDate.setDate(availableDate.getDate() + 1)
+          const formattedTime = availableDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
           const formattedDate = availableDate.toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
@@ -80,10 +86,10 @@ export default function BookingPage() {
             day: 'numeric'
           })
           setAvailabilityMessage(
-            `Vehicle not available for these dates. Available from ${formattedDate}`
+            `Vehicle not available for these times. Available from ${formattedDate} at ${formattedTime}`
           )
         } else {
-          setAvailabilityMessage('Vehicle is available for these dates')
+          setAvailabilityMessage('Vehicle is available for these times')
         }
       } else {
         setAvailabilityMessage(null)
@@ -91,7 +97,7 @@ export default function BookingPage() {
     }
 
     checkAvailability()
-  }, [formData.vehicle_id, formData.start_date, formData.end_date, checkBookingConflict])
+  }, [formData.vehicle_id, formData.start_date, formData.end_date, formData.start_time, formData.end_time, checkBookingConflict])
 
   async function fetchRulesAndVehicles() {
     try {
@@ -127,7 +133,9 @@ export default function BookingPage() {
           vehicle_id: formData.vehicle_id,
           user_email: formData.user_email,
           start_date: formData.start_date,
-          end_date: formData.end_date
+          end_date: formData.end_date,
+          start_time: formData.start_time,
+          end_time: formData.end_time
         })
       })
 
@@ -166,7 +174,7 @@ export default function BookingPage() {
       }
 
       setMessage({ type: 'success', text: 'Booking submitted successfully! Confirmation email sent.' })
-      setFormData({ vehicle_id: '', user_email: '', start_date: '', end_date: '' })
+      setFormData({ vehicle_id: '', user_email: '', start_date: '', end_date: '', start_time: '09:00', end_time: '17:00' })
       
       // Keep acknowledged true so the user can see the success message
       // Reset after 3 seconds
@@ -325,6 +333,34 @@ export default function BookingPage() {
                   value={formData.end_date}
                   onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                   min={formData.start_date || new Date().toISOString().split('T')[0]}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Time
+                </label>
+                <input
+                  type="time"
+                  required
+                  value={formData.start_time}
+                  onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  End Time
+                </label>
+                <input
+                  type="time"
+                  required
+                  value={formData.end_time}
+                  onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>

@@ -287,7 +287,7 @@ export default function CalendarPage() {
                 <div>
                   <p className="text-sm text-gray-600">Period</p>
                   <p className="font-medium">
-                    {new Date(selectedBooking.start_date).toLocaleDateString()} - {new Date(selectedBooking.end_date).toLocaleDateString()}
+                    {new Date(selectedBooking.start_date).toLocaleDateString()} at {(selectedBooking as any).start_time || '09:00'} - {new Date(selectedBooking.end_date).toLocaleDateString()} at {(selectedBooking as any).end_time || '17:00'}
                   </p>
                 </div>
               </div>

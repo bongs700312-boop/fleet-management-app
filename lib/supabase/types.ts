@@ -31,6 +31,8 @@ export type Database = {
           user_email: string
           start_date: string
           end_date: string
+          start_time: string
+          end_time: string
           status: 'pending' | 'approved' | 'rejected' | 'completed' | 'in_progress'
           created_at: string
           updated_at: string
@@ -41,6 +43,8 @@ export type Database = {
           user_email: string
           start_date: string
           end_date: string
+          start_time?: string
+          end_time?: string
           status?: 'pending' | 'approved' | 'rejected' | 'completed' | 'in_progress'
           created_at?: string
           updated_at?: string
@@ -51,6 +55,8 @@ export type Database = {
           user_email?: string
           start_date?: string
           end_date?: string
+          start_time?: string
+          end_time?: string
           status?: 'pending' | 'approved' | 'rejected' | 'completed' | 'in_progress'
           created_at?: string
           updated_at?: string

@@ -25,7 +25,9 @@ export default function MyBookingsPage() {
   const [editFormData, setEditFormData] = useState({
     vehicle_id: '',
     start_date: '',
-    end_date: ''
+    end_date: '',
+    start_time: '09:00',
+    end_time: '17:00'
   })
 
   const supabase = createClient()
@@ -95,21 +97,20 @@ export default function MyBookingsPage() {
 
       if (queryError) throw queryError
 
-      // Check for date overlap (excluding the current booking being edited)
-      const requestedStart = new Date(editFormData.start_date)
-      const requestedEnd = new Date(editFormData.end_date)
+      // Check for date and time overlap (excluding the current booking being edited)
+      const requestedStart = new Date(`${editFormData.start_date}T${editFormData.start_time}`)
+      const requestedEnd = new Date(`${editFormData.end_date}T${editFormData.end_time}`)
 
       if (existingBookings && existingBookings.length > 0) {
         for (const booking of existingBookings) {
           if (booking.id === editingBooking.id) continue // Skip current booking
           
-          const bookingStart = new Date(booking.start_date)
-          const bookingEnd = new Date(booking.end_date)
+          const bookingStart = new Date(`${booking.start_date}T${(booking as any).start_time || '09:00'}`)
+          const bookingEnd = new Date(`${booking.end_date}T${(booking as any).end_time || '17:00'}`)
 
           if (requestedStart <= bookingEnd && requestedEnd >= bookingStart) {
-            const availableDate = new Date(bookingEnd)
-            availableDate.setDate(availableDate.getDate() + 1)
-            const formattedDate = availableDate.toLocaleDateString('en-US', {
+            const formattedTime = bookingEnd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+            const formattedDate = bookingEnd.toLocaleDateString('en-US', {
               weekday: 'long',
               year: 'numeric',
               month: 'long',
@@ -118,7 +119,7 @@ export default function MyBookingsPage() {
 
             setMessage({
               type: 'error',
-              text: `Vehicle not available for these dates. Available from ${formattedDate}`
+              text: `Vehicle not available for these times. Available from ${formattedDate} at ${formattedTime}`
             })
             setLoading(false)
             return
@@ -132,7 +133,9 @@ export default function MyBookingsPage() {
         .update({
           vehicle_id: editFormData.vehicle_id,
           start_date: editFormData.start_date,
-          end_date: editFormData.end_date
+          end_date: editFormData.end_date,
+          start_time: editFormData.start_time,
+          end_time: editFormData.end_time
         })
         .eq('id', editingBooking.id)
 
@@ -140,7 +143,7 @@ export default function MyBookingsPage() {
 
       setMessage({ type: 'success', text: 'Booking updated successfully!' })
       setEditingBooking(null)
-      setEditFormData({ vehicle_id: '', start_date: '', end_date: '' })
+      setEditFormData({ vehicle_id: '', start_date: '', end_date: '', start_time: '09:00', end_time: '17:00' })
       await fetchMyBookings()
     } catch (error) {
       console.error('Error updating booking:', error)
@@ -179,13 +182,15 @@ export default function MyBookingsPage() {
     setEditFormData({
       vehicle_id: booking.vehicle_id,
       start_date: booking.start_date,
-      end_date: booking.end_date
+      end_date: booking.end_date,
+      start_time: (booking as any).start_time || '09:00',
+      end_time: (booking as any).end_time || '17:00'
     })
   }
 
   function cancelEdit() {
     setEditingBooking(null)
-    setEditFormData({ vehicle_id: '', start_date: '', end_date: '' })
+    setEditFormData({ vehicle_id: '', start_date: '', end_date: '', start_time: '09:00', end_time: '17:00' })
   }
 
   return (
@@ -280,6 +285,30 @@ export default function MyBookingsPage() {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                <input
+                  type="time"
+                  required
+                  value={editFormData.start_time}
+                  onChange={(e) => setEditFormData({ ...editFormData, start_time: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                <input
+                  type="time"
+                  required
+                  value={editFormData.end_time}
+                  onChange={(e) => setEditFormData({ ...editFormData, end_time: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+
             <div className="flex gap-4">
               <button
                 onClick={handleUpdateBooking}
@@ -323,10 +352,10 @@ export default function MyBookingsPage() {
                     </div>
                     <div className="text-sm text-gray-600 space-y-1">
                       <p>
-                        <strong>From:</strong> {new Date(booking.start_date).toLocaleDateString()}
+                        <strong>From:</strong> {new Date(booking.start_date).toLocaleDateString()} at {(booking as any).start_time || '09:00'}
                       </p>
                       <p>
-                        <strong>To:</strong> {new Date(booking.end_date).toLocaleDateString()}
+                        <strong>To:</strong> {new Date(booking.end_date).toLocaleDateString()} at {(booking as any).end_time || '17:00'}
                       </p>
                       <p>
                         <strong>Status:</strong> <span className="text-yellow-600 font-medium">Pending</span>
