@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       <h2>Fine Details:</h2>
       <ul>
         <li><strong>Date:</strong> ${new Date(fine.fine_date).toLocaleDateString()}</li>
-        <li><strong>Amount:</strong> $${fine.amount.toLocaleString()}</li>
+        <li><strong>Amount:</strong> R${fine.amount.toLocaleString()}</li>
         <li><strong>Status:</strong> ${fine.status}</li>
         <li><strong>Reason:</strong> ${fine.reason}</li>
       </ul>
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await resend.emails.send({
       from: 'Fleet Management System <fleet-management@yourdomain.com>',
       to: fine.staff_email,
-      subject: `Traffic Fine Notification - $${fine.amount.toLocaleString()} - ${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+      subject: `Traffic Fine Notification - R${fine.amount.toLocaleString()} - ${vehicle.year} ${vehicle.make} ${vehicle.model}`,
       html: emailContent,
     })
 

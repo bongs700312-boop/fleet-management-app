@@ -134,7 +134,7 @@ export default function FinesPage() {
             <div>
               <p className="text-sm text-gray-600">Pending Amount</p>
               <p className="text-2xl font-bold text-orange-600">
-                ${fines.filter(f => f.status === 'pending').reduce((sum, f) => sum + f.amount, 0).toLocaleString()}
+                R${fines.filter(f => f.status === 'pending').reduce((sum, f) => sum + f.amount, 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -226,7 +226,7 @@ export default function FinesPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Amount ($)
+                  Amount (R)
                 </label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -307,7 +307,7 @@ export default function FinesPage() {
                             {new Date(fine.fine_date).toLocaleDateString()}
                           </span>
                         </div>
-                        <p className="font-semibold text-lg text-red-600">${fine.amount.toLocaleString()}</p>
+                        <p className="font-semibold text-lg text-red-600">R${fine.amount.toLocaleString()}</p>
                         <p className="text-sm text-gray-600 mt-1">
                           {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model} - ${vehicle.license_plate}` : 'Unknown vehicle'}
                         </p>

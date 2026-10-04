@@ -92,7 +92,7 @@ export default function Dashboard() {
         />
         <StatCard
           title="Outstanding Fines"
-          value={`$${pendingFines.toLocaleString()}`}
+          value={`R${pendingFines.toLocaleString()}`}
           icon={DollarSign}
           change={`${fines.filter(f => f.status === 'pending').length} pending fines`}
           negative={pendingFines > 0}

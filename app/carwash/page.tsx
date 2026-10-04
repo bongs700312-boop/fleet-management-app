@@ -129,7 +129,7 @@ export default function CarwashPage() {
             <div>
               <p className="text-sm text-gray-600">Monthly Total</p>
               <p className="text-2xl font-bold text-green-600">
-                ${monthlyTotal.toLocaleString()}
+                R${monthlyTotal.toLocaleString()}
               </p>
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function CarwashPage() {
             <div>
               <p className="text-sm text-gray-600">Average Cost</p>
               <p className="text-2xl font-bold text-purple-600">
-                ${carwashes.length > 0 ? (carwashes.reduce((sum, c) => sum + c.cost, 0) / carwashes.length).toFixed(2) : '0.00'}
+                R${carwashes.length > 0 ? (carwashes.reduce((sum, c) => sum + c.cost, 0) / carwashes.length).toFixed(2) : '0.00'}
               </p>
             </div>
           </div>
@@ -223,7 +223,7 @@ export default function CarwashPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Cost ($)
+                  Cost (R)
                 </label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -296,7 +296,7 @@ export default function CarwashPage() {
                             {new Date(carwash.wash_date).toLocaleDateString()}
                           </span>
                         </div>
-                        <p className="font-semibold text-lg text-green-600">${carwash.cost.toFixed(2)}</p>
+                        <p className="font-semibold text-lg text-green-600">R${carwash.cost.toFixed(2)}</p>
                         <p className="text-sm text-gray-600 mt-1">
                           {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model} - ${vehicle.license_plate}` : 'Unknown vehicle'}
                         </p>

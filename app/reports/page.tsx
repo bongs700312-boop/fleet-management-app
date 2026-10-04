@@ -166,8 +166,8 @@ export default function Reports() {
           vehicle.status,
           vehicle.current_mileage.toLocaleString() + ' km',
           vehicleBookings,
-          '$' + vehicleFines.toLocaleString(),
-          '$' + vehicleCarwashes.toFixed(2),
+          'R' + vehicleFines.toLocaleString(),
+          'R' + vehicleCarwashes.toFixed(2),
           vehicle.next_service_date ? new Date(vehicle.next_service_date).toLocaleDateString() : 'N/A'
         ]
       })
@@ -203,10 +203,10 @@ export default function Reports() {
       doc.text('Total Expenses', 14, 45)
       
       const summaryData = [
-        ['Total Fines', '$' + totalFines.toLocaleString()],
-        ['Pending Fines', '$' + pendingFines.toLocaleString()],
-        ['Total Carwash Spend', '$' + totalCarwashSpend.toFixed(2)],
-        ['Monthly Carwash Spend', '$' + monthlyCarwashSpend.toFixed(2)]
+        ['Total Fines', 'R' + totalFines.toLocaleString()],
+        ['Pending Fines', 'R' + pendingFines.toLocaleString()],
+        ['Total Carwash Spend', 'R' + totalCarwashSpend.toFixed(2)],
+        ['Monthly Carwash Spend', 'R' + monthlyCarwashSpend.toFixed(2)]
       ]
 
       const summaryTable = autoTable(doc, {
@@ -228,7 +228,7 @@ export default function Reports() {
           vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Unknown',
           fine.staff_email,
           new Date(fine.fine_date).toLocaleDateString(),
-          '$' + fine.amount.toLocaleString(),
+          'R' + fine.amount.toLocaleString(),
           fine.status,
           fine.reason
         ]
@@ -253,7 +253,7 @@ export default function Reports() {
           vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Unknown',
           carwash.staff_name,
           new Date(carwash.wash_date).toLocaleDateString(),
-          '$' + carwash.cost.toFixed(2),
+          'R' + carwash.cost.toFixed(2),
           carwash.notes || 'N/A'
         ]
       })
