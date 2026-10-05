@@ -8,7 +8,7 @@ import {
   BookOpen, 
   ClipboardCheck, 
   Car, 
-  DollarSign, 
+  Wallet, 
   Droplets, 
   FileText,
   Calendar as CalendarIcon,
@@ -28,7 +28,7 @@ const navigation = [
   { name: 'Check-In/out Inspections', href: '/inspections', icon: ClipboardCheck },
   { name: 'Vehicles & Services', href: '/vehicles', icon: Car },
   { name: 'Petrol Fillups', href: '/petrol', icon: Fuel },
-  { name: 'Fines', href: '/fines', icon: DollarSign },
+  { name: 'Fines', href: '/fines', icon: Wallet },
   { name: 'Carwash', href: '/carwash', icon: Droplets },
   { name: 'Executive Reports', href: '/reports', icon: FileText },
 ]

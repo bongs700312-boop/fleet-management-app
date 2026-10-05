@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
-import { Fuel, Car, User, Calendar, DollarSign, Gauge, MapPin, CheckCircle, AlertTriangle, Plus, X } from 'lucide-react'
+import { Fuel, Car, User, Calendar, Wallet, Gauge, MapPin, CheckCircle, AlertTriangle, Plus, X } from 'lucide-react'
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
 type PetrolFillup = Database['public']['Tables']['petrol_fillups']['Row'] & {
@@ -174,7 +174,7 @@ export default function PetrolPage() {
         </div>
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center gap-3">
-            <DollarSign className="text-orange-600" size={24} />
+            <Wallet className="text-orange-600" size={24} />
             <div>
               <p className="text-sm text-gray-600">Average per Fillup</p>
               <p className="text-2xl font-bold text-gray-900">
@@ -255,7 +255,7 @@ export default function PetrolPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Amount (R)</label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                   <input
                     type="number"
                     required

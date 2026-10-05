@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
-import { DollarSign, Car, Mail, Calendar, AlertTriangle, CheckCircle, XCircle, FileText } from 'lucide-react'
+import { Car, Mail, Calendar, AlertTriangle, CheckCircle, XCircle, FileText } from 'lucide-react'
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
 type Fine = Database['public']['Tables']['fines']['Row']
@@ -130,7 +130,7 @@ export default function FinesPage() {
         </div>
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center gap-3">
-            <DollarSign className="text-orange-600" size={24} />
+            <AlertTriangle className="text-orange-600" size={24} />
             <div>
               <p className="text-sm text-gray-600">Pending Amount</p>
               <p className="text-2xl font-bold text-orange-600">
@@ -154,7 +154,7 @@ export default function FinesPage() {
         {/* Fine Form */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <DollarSign className="text-blue-500" size={20} />
+            <AlertTriangle className="text-blue-500" size={20} />
             Log New Fine
           </h2>
 
@@ -229,7 +229,7 @@ export default function FinesPage() {
                   Amount (R)
                 </label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <AlertTriangle className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                   <input
                     type="number"
                     required

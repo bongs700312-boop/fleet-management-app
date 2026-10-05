@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
-import { LayoutDashboard, Car, ClipboardCheck, DollarSign, Droplets, FileText, Calendar, AlertTriangle } from 'lucide-react'
+import { LayoutDashboard, Car, ClipboardCheck, Wallet, Droplets, FileText, Calendar, AlertTriangle } from 'lucide-react'
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
 type Booking = Database['public']['Tables']['bookings']['Row']
@@ -93,7 +93,7 @@ export default function Dashboard() {
         <StatCard
           title="Outstanding Fines"
           value={`R${pendingFines.toLocaleString()}`}
-          icon={DollarSign}
+          icon={Wallet}
           change={`${fines.filter(f => f.status === 'pending').length} pending fines`}
           negative={pendingFines > 0}
           positive={pendingFines === 0}

@@ -7,7 +7,7 @@ import {
   BarChart3, 
   Gauge, 
   Calendar, 
-  DollarSign, 
+  Wallet, 
   Droplets, 
   Download, 
   FileText, 
@@ -333,7 +333,7 @@ export default function Reports() {
 
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-3">
-            <DollarSign className="text-red-600" size={32} />
+            <Wallet className="text-red-600" size={32} />
             <div>
               <p className="text-sm text-gray-600">Total Fines</p>
               <p className="text-2xl font-bold text-red-600">${totalFines.toLocaleString()}</p>
@@ -415,7 +415,7 @@ export default function Reports() {
           {/* Expense Summary Report */}
           <div className="border rounded-lg p-4">
             <h3 className="font-semibold mb-2 flex items-center gap-2">
-              <DollarSign size={18} />
+              <Wallet size={18} />
               Expense Summary
             </h3>
             <p className="text-sm text-gray-600 mb-4">Fines, carwash costs, and totals</p>
