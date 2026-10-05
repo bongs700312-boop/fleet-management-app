@@ -129,7 +129,7 @@ export default function CarwashPage() {
             <div>
               <p className="text-sm text-gray-600">Monthly Total</p>
               <p className="text-2xl font-bold text-green-600">
-                R${monthlyTotal.toLocaleString()}
+                R${monthlyTotal.toFixed(2)}
               </p>
             </div>
           </div>

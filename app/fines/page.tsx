@@ -134,7 +134,7 @@ export default function FinesPage() {
             <div>
               <p className="text-sm text-gray-600">Pending Amount</p>
               <p className="text-2xl font-bold text-orange-600">
-                R${fines.filter(f => f.status === 'pending').reduce((sum, f) => sum + f.amount, 0).toLocaleString()}
+                R${fines.filter(f => f.status === 'pending').reduce((sum, f) => sum + f.amount, 0).toFixed(2)}
               </p>
             </div>
           </div>
@@ -307,7 +307,7 @@ export default function FinesPage() {
                             {new Date(fine.fine_date).toLocaleDateString()}
                           </span>
                         </div>
-                        <p className="font-semibold text-lg text-red-600">R${fine.amount.toLocaleString()}</p>
+                        <p className="font-semibold text-lg text-red-600">R${fine.amount.toFixed(2)}</p>
                         <p className="text-sm text-gray-600 mt-1">
                           {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model} - ${vehicle.license_plate}` : 'Unknown vehicle'}
                         </p>

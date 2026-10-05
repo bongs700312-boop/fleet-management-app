@@ -166,7 +166,7 @@ export default function Reports() {
           vehicle.status,
           vehicle.current_mileage.toLocaleString() + ' km',
           vehicleBookings,
-          'R' + vehicleFines.toLocaleString(),
+          'R' + vehicleFines.toFixed(2),
           'R' + vehicleCarwashes.toFixed(2),
           vehicle.next_service_date ? new Date(vehicle.next_service_date).toLocaleDateString() : 'N/A'
         ]
@@ -203,8 +203,8 @@ export default function Reports() {
       doc.text('Total Expenses', 14, 45)
       
       const summaryData = [
-        ['Total Fines', 'R' + totalFines.toLocaleString()],
-        ['Pending Fines', 'R' + pendingFines.toLocaleString()],
+        ['Total Fines', 'R' + totalFines.toFixed(2)],
+        ['Pending Fines', 'R' + pendingFines.toFixed(2)],
         ['Total Carwash Spend', 'R' + totalCarwashSpend.toFixed(2)],
         ['Monthly Carwash Spend', 'R' + monthlyCarwashSpend.toFixed(2)]
       ]
@@ -228,7 +228,7 @@ export default function Reports() {
           vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Unknown',
           fine.staff_email,
           new Date(fine.fine_date).toLocaleDateString(),
-          'R' + fine.amount.toLocaleString(),
+          'R' + fine.amount.toFixed(2),
           fine.status,
           fine.reason
         ]
@@ -336,7 +336,7 @@ export default function Reports() {
             <Wallet className="text-red-600" size={32} />
             <div>
               <p className="text-sm text-gray-600">Total Fines</p>
-              <p className="text-2xl font-bold text-red-600">${totalFines.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-red-600">R${totalFines.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -346,7 +346,7 @@ export default function Reports() {
             <Droplets className="text-cyan-600" size={32} />
             <div>
               <p className="text-sm text-gray-600">Total Carwash Spend</p>
-              <p className="text-2xl font-bold text-cyan-600">${totalCarwashSpend.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-cyan-600">R${totalCarwashSpend.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -475,20 +475,20 @@ export default function Reports() {
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Pending Fines</span>
-              <span className="font-semibold text-red-600">${pendingFines.toLocaleString()}</span>
+              <span className="font-semibold text-red-600">R${pendingFines.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Paid Fines</span>
-              <span className="font-semibold text-green-600">${fines.filter(f => f.status === 'paid').reduce((sum, f) => sum + f.amount, 0).toLocaleString()}</span>
+              <span className="font-semibold text-green-600">R${fines.filter(f => f.status === 'paid').reduce((sum, f) => sum + f.amount, 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Monthly Carwash</span>
-              <span className="font-semibold text-cyan-600">${monthlyCarwashSpend.toFixed(2)}</span>
+              <span className="font-semibold text-cyan-600">R${monthlyCarwashSpend.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Avg Cost per Wash</span>
               <span className="font-semibold">
-                ${carwashes.length > 0 ? (totalCarwashSpend / carwashes.length).toFixed(2) : '0.00'}
+                R${carwashes.length > 0 ? (totalCarwashSpend / carwashes.length).toFixed(2) : '0.00'}
               </span>
             </div>
           </div>
