@@ -27,7 +27,10 @@ export default function MyBookingsPage() {
     start_date: '',
     end_date: '',
     start_time: '09:00',
-    end_time: '17:00'
+    end_time: '17:00',
+    driver_name: '',
+    number_of_passengers: '',
+    trip_description: ''
   })
 
   const supabase = createClient()
@@ -135,7 +138,10 @@ export default function MyBookingsPage() {
           start_date: editFormData.start_date,
           end_date: editFormData.end_date,
           start_time: editFormData.start_time,
-          end_time: editFormData.end_time
+          end_time: editFormData.end_time,
+          driver_name: editFormData.driver_name || null,
+          number_of_passengers: editFormData.number_of_passengers ? parseInt(editFormData.number_of_passengers) : null,
+          trip_description: editFormData.trip_description || null
         })
         .eq('id', editingBooking.id)
 
@@ -143,7 +149,7 @@ export default function MyBookingsPage() {
 
       setMessage({ type: 'success', text: 'Booking updated successfully!' })
       setEditingBooking(null)
-      setEditFormData({ vehicle_id: '', start_date: '', end_date: '', start_time: '09:00', end_time: '17:00' })
+      setEditFormData({ vehicle_id: '', start_date: '', end_date: '', start_time: '09:00', end_time: '17:00', driver_name: '', number_of_passengers: '', trip_description: '' })
       await fetchMyBookings()
     } catch (error) {
       console.error('Error updating booking:', error)
@@ -184,13 +190,16 @@ export default function MyBookingsPage() {
       start_date: booking.start_date,
       end_date: booking.end_date,
       start_time: (booking as any).start_time || '09:00',
-      end_time: (booking as any).end_time || '17:00'
+      end_time: (booking as any).end_time || '17:00',
+      driver_name: (booking as any).driver_name || '',
+      number_of_passengers: (booking as any).number_of_passengers ? String((booking as any).number_of_passengers) : '',
+      trip_description: (booking as any).trip_description || ''
     })
   }
 
   function cancelEdit() {
     setEditingBooking(null)
-    setEditFormData({ vehicle_id: '', start_date: '', end_date: '', start_time: '09:00', end_time: '17:00' })
+    setEditFormData({ vehicle_id: '', start_date: '', end_date: '', start_time: '09:00', end_time: '17:00', driver_name: '', number_of_passengers: '', trip_description: '' })
   }
 
   return (
@@ -307,6 +316,40 @@ export default function MyBookingsPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Designated Driver Name</label>
+              <input
+                type="text"
+                placeholder="Full name of the driver"
+                value={editFormData.driver_name}
+                onChange={(e) => setEditFormData({ ...editFormData, driver_name: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Number of Passengers</label>
+              <input
+                type="number"
+                min="1"
+                placeholder="How many people will be travelling"
+                value={editFormData.number_of_passengers}
+                onChange={(e) => setEditFormData({ ...editFormData, number_of_passengers: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Trip Description</label>
+              <textarea
+                rows={3}
+                placeholder="Purpose of the trip, destination, etc."
+                value={editFormData.trip_description}
+                onChange={(e) => setEditFormData({ ...editFormData, trip_description: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
             </div>
 
             <div className="flex gap-4">

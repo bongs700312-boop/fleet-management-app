@@ -23,7 +23,10 @@ export default function BookingPage() {
     start_date: '',
     end_date: '',
     start_time: '09:00',
-    end_time: '17:00'
+    end_time: '17:00',
+    driver_name: '',
+    number_of_passengers: '',
+    trip_description: ''
   })
 
   const supabase = createClient()
@@ -135,7 +138,10 @@ export default function BookingPage() {
           start_date: formData.start_date,
           end_date: formData.end_date,
           start_time: formData.start_time,
-          end_time: formData.end_time
+          end_time: formData.end_time,
+          driver_name: formData.driver_name,
+          number_of_passengers: formData.number_of_passengers ? parseInt(formData.number_of_passengers) : null,
+          trip_description: formData.trip_description
         })
       })
 
@@ -174,7 +180,7 @@ export default function BookingPage() {
       }
 
       setMessage({ type: 'success', text: 'Booking submitted successfully! Confirmation email sent.' })
-      setFormData({ vehicle_id: '', user_email: '', start_date: '', end_date: '', start_time: '09:00', end_time: '17:00' })
+      setFormData({ vehicle_id: '', user_email: '', start_date: '', end_date: '', start_time: '09:00', end_time: '17:00', driver_name: '', number_of_passengers: '', trip_description: '' })
       
       // Keep acknowledged true so the user can see the success message
       // Reset after 3 seconds
@@ -364,6 +370,46 @@ export default function BookingPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Designated Driver Name
+              </label>
+              <input
+                type="text"
+                placeholder="Full name of the driver"
+                value={formData.driver_name}
+                onChange={(e) => setFormData({ ...formData, driver_name: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Number of Passengers
+              </label>
+              <input
+                type="number"
+                min="1"
+                placeholder="How many people will be travelling"
+                value={formData.number_of_passengers}
+                onChange={(e) => setFormData({ ...formData, number_of_passengers: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Trip Description
+              </label>
+              <textarea
+                rows={3}
+                placeholder="Purpose of the trip, destination, etc."
+                value={formData.trip_description}
+                onChange={(e) => setFormData({ ...formData, trip_description: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
             </div>
 
             {availabilityMessage && (

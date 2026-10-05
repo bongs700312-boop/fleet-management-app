@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = createClient()
     const body = await request.json()
-    const { vehicle_id, user_email, start_date, end_date, start_time, end_time } = body
+    const { vehicle_id, user_email, start_date, end_date, start_time, end_time, driver_name, number_of_passengers, trip_description } = body
 
     // Validate required fields
     if (!vehicle_id || !user_email || !start_date || !end_date || !start_time || !end_time) {
@@ -69,6 +69,9 @@ export async function POST(request: NextRequest) {
         end_date,
         start_time,
         end_time,
+        driver_name: driver_name || null,
+        number_of_passengers: number_of_passengers || null,
+        trip_description: trip_description || null,
         status: 'pending'
       })
       .select()

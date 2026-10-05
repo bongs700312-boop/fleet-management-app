@@ -33,6 +33,9 @@ export type Database = {
           end_date: string
           start_time: string
           end_time: string
+          driver_name?: string
+          number_of_passengers?: number
+          trip_description?: string
           status: 'pending' | 'approved' | 'rejected' | 'completed' | 'in_progress'
           created_at: string
           updated_at: string
@@ -45,6 +48,9 @@ export type Database = {
           end_date: string
           start_time?: string
           end_time?: string
+          driver_name?: string
+          number_of_passengers?: number
+          trip_description?: string
           status?: 'pending' | 'approved' | 'rejected' | 'completed' | 'in_progress'
           created_at?: string
           updated_at?: string
@@ -57,6 +63,9 @@ export type Database = {
           end_date?: string
           start_time?: string
           end_time?: string
+          driver_name?: string
+          number_of_passengers?: number
+          trip_description?: string
           status?: 'pending' | 'approved' | 'rejected' | 'completed' | 'in_progress'
           created_at?: string
           updated_at?: string

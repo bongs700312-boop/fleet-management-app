@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Car, User, CheckCircle, Clock, XCircle, RotateCcw, Calendar } from 'lucide-react'
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Car, User, CheckCircle, Clock, XCircle, RotateCcw, Calendar, FileText } from 'lucide-react'
 
 type Booking = Database['public']['Tables']['bookings']['Row'] & {
   vehicles: {
@@ -291,6 +291,36 @@ export default function CalendarPage() {
                   </p>
                 </div>
               </div>
+
+              {(selectedBooking as any).driver_name && (
+                <div className="flex items-center gap-2">
+                  <User size={20} className="text-gray-500" />
+                  <div>
+                    <p className="text-sm text-gray-600">Driver</p>
+                    <p className="font-medium">{(selectedBooking as any).driver_name}</p>
+                  </div>
+                </div>
+              )}
+
+              {(selectedBooking as any).number_of_passengers && (
+                <div className="flex items-center gap-2">
+                  <User size={20} className="text-gray-500" />
+                  <div>
+                    <p className="text-sm text-gray-600">Passengers</p>
+                    <p className="font-medium">{(selectedBooking as any).number_of_passengers}</p>
+                  </div>
+                </div>
+              )}
+
+              {(selectedBooking as any).trip_description && (
+                <div className="flex items-center gap-2">
+                  <FileText size={20} className="text-gray-500" />
+                  <div>
+                    <p className="text-sm text-gray-600">Trip Description</p>
+                    <p className="font-medium">{(selectedBooking as any).trip_description}</p>
+                  </div>
+                </div>
+              )}
 
               <div className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${getStatusColor(selectedBooking.status)}`}>
                 {getStatusIcon(selectedBooking.status)}

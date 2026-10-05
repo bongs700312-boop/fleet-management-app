@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
-import { Calendar, CheckCircle, XCircle, AlertCircle, Car, Mail, Filter } from 'lucide-react'
+import { Calendar, CheckCircle, XCircle, AlertCircle, Car, Mail, Filter, User, FileText } from 'lucide-react'
 
 type Booking = Database['public']['Tables']['bookings']['Row']
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
@@ -273,7 +273,28 @@ export default function BookingsPage() {
                           <Mail size={18} className="text-gray-400" />
                           <span className="text-gray-700">{booking.user_email}</span>
                         </div>
-                        
+
+                        {(booking as any).driver_name && (
+                          <div className="flex items-center gap-2">
+                            <User size={18} className="text-gray-400" />
+                            <span className="text-gray-700">Driver: {(booking as any).driver_name}</span>
+                          </div>
+                        )}
+
+                        {(booking as any).number_of_passengers && (
+                          <div className="flex items-center gap-2">
+                            <User size={18} className="text-gray-400" />
+                            <span className="text-gray-700">Passengers: {(booking as any).number_of_passengers}</span>
+                          </div>
+                        )}
+
+                        {(booking as any).trip_description && (
+                          <div className="flex items-center gap-2">
+                            <FileText size={18} className="text-gray-400" />
+                            <span className="text-gray-700 text-sm">{(booking as any).trip_description}</span>
+                          </div>
+                        )}
+
                         <div className="flex items-center gap-4 text-sm text-gray-600">
                           <div className="flex items-center gap-1">
                             <Calendar size={16} />
