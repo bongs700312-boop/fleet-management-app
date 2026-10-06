@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
-import { 
-  BarChart3, 
-  Gauge, 
-  Calendar, 
-  Wallet, 
-  Droplets, 
-  Download, 
-  FileText, 
+import {
+  BarChart3,
+  Gauge,
+  Calendar,
+  Wallet,
+  Droplets,
+  Download,
+  FileText,
   Car,
   TrendingUp,
   AlertTriangle,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { useRequireAdmin } from '@/lib/auth'
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
 type Booking = Database['public']['Tables']['bookings']['Row']
@@ -25,6 +26,7 @@ type Fine = Database['public']['Tables']['fines']['Row']
 type Carwash = Database['public']['Tables']['carwashes']['Row']
 
 export default function Reports() {
+  const { user, loading: authLoading } = useRequireAdmin()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
   const [fines, setFines] = useState<Fine[]>([])

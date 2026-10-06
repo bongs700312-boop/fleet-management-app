@@ -1,6 +1,32 @@
 export type Database = {
   public: {
     Tables: {
+      users: {
+        Row: {
+          id: string
+          email: string
+          full_name: string
+          role: 'admin' | 'staff'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          full_name: string
+          role?: 'admin' | 'staff'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          full_name?: string
+          role?: 'admin' | 'staff'
+          created_at?: string
+          updated_at?: string
+        }
+      }
       company_rules: {
         Row: {
           id: string

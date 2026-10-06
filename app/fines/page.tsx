@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
 import { Car, Mail, Calendar, AlertTriangle, CheckCircle, XCircle, FileText } from 'lucide-react'
+import { useRequireAdmin } from '@/lib/auth'
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
 type Fine = Database['public']['Tables']['fines']['Row']
 
 export default function FinesPage() {
+  const { user, loading: authLoading } = useRequireAdmin()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [fines, setFines] = useState<Fine[]>([])
   const [loading, setLoading] = useState(true)

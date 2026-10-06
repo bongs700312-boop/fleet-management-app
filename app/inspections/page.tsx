@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
 import { ClipboardCheck, Car, User, Gauge, AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
+import { useRequireAdmin } from '@/lib/auth'
 
 type Booking = Database['public']['Tables']['bookings']['Row']
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
@@ -12,6 +13,7 @@ type Inspection = Database['public']['Tables']['inspections']['Row']
 type TabType = 'checkout' | 'checkin'
 
 export default function InspectionsPage() {
+  const { user, loading: authLoading } = useRequireAdmin()
   const [activeTab, setActiveTab] = useState<TabType>('checkout')
   const [bookings, setBookings] = useState<Booking[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
 import { LayoutDashboard, Car, ClipboardCheck, Wallet, Droplets, FileText, Calendar, AlertTriangle } from 'lucide-react'
+import { useRequireAdmin } from '@/lib/auth'
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
 type Booking = Database['public']['Tables']['bookings']['Row']
@@ -12,6 +13,7 @@ type Carwash = Database['public']['Tables']['carwashes']['Row']
 type Inspection = Database['public']['Tables']['inspections']['Row']
 
 export default function Dashboard() {
+  const { user, loading: authLoading } = useRequireAdmin()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
   const [fines, setFines] = useState<Fine[]>([])

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
 import { Fuel, Car, User, Calendar, Wallet, Gauge, MapPin, CheckCircle, AlertTriangle, Plus, X } from 'lucide-react'
+import { useRequireAdmin } from '@/lib/auth'
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
 type PetrolFillup = Database['public']['Tables']['petrol_fillups']['Row'] & {
@@ -16,6 +17,7 @@ type PetrolFillup = Database['public']['Tables']['petrol_fillups']['Row'] & {
 }
 
 export default function PetrolPage() {
+  const { user, loading: authLoading } = useRequireAdmin()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [fillups, setFillups] = useState<PetrolFillup[]>([])
   const [loading, setLoading] = useState(true)

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -16,26 +16,53 @@ import {
   Mail,
   Fuel,
   Menu,
-  X
+  X,
+  LogOut,
+  Users
 } from 'lucide-react'
 
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Book a Vehicle', href: '/rules-booking', icon: BookOpen },
-  { name: 'My Pending Bookings', href: '/my-bookings', icon: Mail },
-  { name: 'Booking Calendar', href: '/calendar', icon: CalendarIcon },
-  { name: 'Booking Management', href: '/bookings', icon: Calendar },
-  { name: 'Check-In/out Inspections', href: '/inspections', icon: ClipboardCheck },
-  { name: 'Vehicles & Services', href: '/vehicles', icon: Car },
-  { name: 'Petrol Fillups', href: '/petrol', icon: Fuel },
-  { name: 'Fines', href: '/fines', icon: Wallet },
-  { name: 'Carwash', href: '/carwash', icon: Droplets },
-  { name: 'Executive Reports', href: '/reports', icon: FileText },
+const allNavigation = [
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard, role: 'admin' },
+  { name: 'Book a Vehicle', href: '/rules-booking', icon: BookOpen, role: 'all' },
+  { name: 'My Pending Bookings', href: '/my-bookings', icon: Mail, role: 'all' },
+  { name: 'Booking Calendar', href: '/calendar', icon: CalendarIcon, role: 'all' },
+  { name: 'Booking Management', href: '/bookings', icon: Calendar, role: 'admin' },
+  { name: 'Check-In/out Inspections', href: '/inspections', icon: ClipboardCheck, role: 'admin' },
+  { name: 'Vehicles & Services', href: '/vehicles', icon: Car, role: 'admin' },
+  { name: 'Petrol Fillups', href: '/petrol', icon: Fuel, role: 'admin' },
+  { name: 'Fines', href: '/fines', icon: Wallet, role: 'admin' },
+  { name: 'Carwash', href: '/carwash', icon: Droplets, role: 'admin' },
+  { name: 'Executive Reports', href: '/reports', icon: FileText, role: 'admin' },
+  { name: 'User Management', href: '/users', icon: Users, role: 'admin' },
 ]
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
+  const [userRole, setUserRole] = useState<'admin' | 'staff' | null>(null)
   const pathname = usePathname()
+  const router = useRouter()
+
+  useEffect(() => {
+    // Check for logged in user
+    const userStr = localStorage.getItem('currentUser')
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      setUserRole(user.role)
+    } else {
+      // Redirect to login if not logged in
+      router.push('/login')
+    }
+  }, [router])
+
+  // Filter navigation based on user role
+  const navigation = allNavigation.filter(item => 
+    item.role === 'all' || item.role === userRole
+  )
+
+  function handleLogout() {
+    localStorage.removeItem('currentUser')
+    router.push('/login')
+  }
 
   return (
     <>
@@ -86,7 +113,14 @@ export default function Sidebar() {
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t">
+          <div className="p-4 border-t space-y-2">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+            >
+              <LogOut size={20} />
+              <span className="font-medium">Logout</span>
+            </button>
             <p className="text-sm text-gray-500">© 2026 Fleet Management</p>
           </div>
         </div>
