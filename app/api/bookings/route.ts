@@ -69,17 +69,18 @@ export async function POST(request: NextRequest) {
         end_date,
         start_time,
         end_time,
-        driver_name: driver_name || null,
-        number_of_passengers: number_of_passengers || null,
-        trip_description: trip_description || null,
+        ...(driver_name && { driver_name }),
+        ...(number_of_passengers && { number_of_passengers: parseInt(number_of_passengers) }),
+        ...(trip_description && { trip_description }),
         status: 'pending'
       })
       .select()
       .single()
 
     if (bookingError) {
+      console.error('Booking creation error:', bookingError)
       return NextResponse.json(
-        { error: 'Failed to create booking' },
+        { error: 'Failed to create booking: ' + bookingError.message },
         { status: 500 }
       )
     }
