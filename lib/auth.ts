@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 export type UserRole = 'admin' | 'staff'
@@ -8,7 +7,6 @@ export type UserRole = 'admin' | 'staff'
 export function useAuth() {
   const [user, setUser] = useState<{ email: string; full_name: string; role: UserRole } | null>(null)
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
 
   useEffect(() => {
     const userStr = localStorage.getItem('currentUser')
@@ -23,30 +21,28 @@ export function useAuth() {
 
 export function useRequireAuth() {
   const { user, loading } = useAuth()
-  const router = useRouter()
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login')
+      window.location.href = '/login'
     }
-  }, [user, loading, router])
+  }, [user, loading])
 
   return { user, loading }
 }
 
 export function useRequireAdmin() {
   const { user, loading } = useAuth()
-  const router = useRouter()
 
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.push('/login')
+        window.location.href = '/login'
       } else if (user.role !== 'admin') {
-        router.push('/rules-booking')
+        window.location.href = '/rules-booking'
       }
     }
-  }, [user, loading, router])
+  }, [user, loading])
 
   return { user, loading }
 }

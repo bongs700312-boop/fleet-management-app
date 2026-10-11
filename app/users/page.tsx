@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
-import { User as UserIcon, Mail, Shield, Plus, X, CheckCircle, AlertTriangle } from 'lucide-react'
+import { User as UserIcon, Mail, Shield, Plus, X, CheckCircle, AlertTriangle, Lock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 type User = Database['public']['Tables']['users']['Row']
@@ -19,6 +19,7 @@ export default function UsersPage() {
   const [formData, setFormData] = useState({
     email: '',
     full_name: '',
+    password: '',
     role: 'staff' as 'admin' | 'staff'
   })
 
@@ -71,13 +72,14 @@ export default function UsersPage() {
         .insert({
           email: formData.email,
           full_name: formData.full_name,
+          password: formData.password,
           role: formData.role
         })
 
       if (error) throw error
 
       setMessage({ type: 'success', text: 'User added successfully!' })
-      setFormData({ email: '', full_name: '', role: 'staff' })
+      setFormData({ email: '', full_name: '', password: '', role: 'staff' })
       setShowAddForm(false)
       await fetchUsers()
     } catch (error) {
@@ -171,6 +173,21 @@ export default function UsersPage() {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="john.doe@company.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="password"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="••••••••"
                 />
               </div>
             </div>

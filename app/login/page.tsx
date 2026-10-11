@@ -10,6 +10,7 @@ type User = Database['public']['Tables']['users']['Row']
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -21,28 +22,25 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      // Check if user exists in our users table
+      // Check if user exists and password matches
       const { data: user, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
+        .eq('password', password)
         .single()
 
       if (userError || !user) {
-        setError('User not found. Please contact your administrator.')
+        setError('Invalid email or password. Please try again.')
         setLoading(false)
         return
       }
 
       // Store user in localStorage for simple session management
       localStorage.setItem('currentUser', JSON.stringify(user))
-      
-      // Redirect to appropriate page based on role
-      if (user.role === 'admin') {
-        router.push('/')
-      } else {
-        router.push('/rules-booking')
-      }
+
+      // Force full page reload to clear any cached state
+      window.location.href = user.role === 'admin' ? '/' : '/rules-booking'
     } catch (err) {
       console.error('Login error:', err)
       setError('Failed to login. Please try again.')
@@ -62,7 +60,7 @@ export default function LoginPage() {
             Fleet Management Login
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your email to access the system
+            Enter your credentials to access the system
           </p>
         </div>
 
@@ -88,6 +86,25 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="your.email@company.com"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="••••••••"
               />
             </div>
           </div>

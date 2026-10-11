@@ -50,9 +50,9 @@ export default function Sidebar() {
       setUserRole(user.role)
     } else {
       // Redirect to login if not logged in
-      router.push('/login')
+      window.location.href = '/login'
     }
-  }, [router])
+  }, [pathname]) // Only depend on pathname to re-check on route changes
 
   // Filter navigation based on user role
   const navigation = allNavigation.filter(item => 
@@ -60,8 +60,8 @@ export default function Sidebar() {
   )
 
   function handleLogout() {
-    localStorage.removeItem('currentUser')
-    router.push('/login')
+    // Navigate to logout page which will handle cleanup
+    router.push('/logout')
   }
 
   return (
