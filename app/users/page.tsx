@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
-import { User as UserIcon, Mail, Shield, Plus, X, CheckCircle, AlertTriangle, Lock } from 'lucide-react'
+import { User as UserIcon, Mail, Shield, Plus, X, CheckCircle, AlertTriangle, Lock, Edit } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 type User = Database['public']['Tables']['users']['Row']
@@ -12,11 +12,20 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const router = useRouter()
 
   const [formData, setFormData] = useState({
+    email: '',
+    full_name: '',
+    password: '',
+    role: 'staff' as 'admin' | 'staff'
+  })
+
+  const [editFormData, setEditFormData] = useState({
     email: '',
     full_name: '',
     password: '',
@@ -110,6 +119,54 @@ export default function UsersPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  function handleEditUser(user: User) {
+    setEditingUser(user)
+    setEditFormData({
+      email: user.email,
+      full_name: user.full_name,
+      password: user.password || '',
+      role: user.role
+    })
+    setShowEditForm(true)
+  }
+
+  async function handleUpdateUser(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editingUser) return
+
+    setLoading(true)
+    setMessage(null)
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          full_name: editFormData.full_name,
+          password: editFormData.password || editingUser.password,
+          role: editFormData.role
+        })
+        .eq('id', editingUser.id)
+
+      if (error) throw error
+
+      setMessage({ type: 'success', text: 'User updated successfully!' })
+      setShowEditForm(false)
+      setEditingUser(null)
+      await fetchUsers()
+    } catch (error) {
+      console.error('Error updating user:', error)
+      setMessage({ type: 'error', text: 'Failed to update user' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function cancelEdit() {
+    setShowEditForm(false)
+    setEditingUser(null)
+    setEditFormData({ email: '', full_name: '', password: '', role: 'staff' })
   }
 
   if (!currentUser) {
@@ -228,6 +285,92 @@ export default function UsersPage() {
         </div>
       )}
 
+      {/* Edit User Form */}
+      {showEditForm && editingUser && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Edit size={20} className="text-blue-500" />
+            Edit User
+          </h2>
+
+          <form onSubmit={handleUpdateUser} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+              <input
+                type="text"
+                required
+                value={editFormData.full_name}
+                onChange={(e) => setEditFormData({ ...editFormData, full_name: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="email"
+                  required
+                  value={editFormData.email}
+                  disabled
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="password"
+                  value={editFormData.password}
+                  onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Leave blank to keep current password"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Leave blank to keep current password</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+              <div className="relative">
+                <Shield className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <select
+                  required
+                  value={editFormData.role}
+                  onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as 'admin' | 'staff' })}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="staff">Staff Member</option>
+                  <option value="admin">Fleet Administrator</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? 'Updating...' : 'Update User'}
+              </button>
+              <button
+                type="button"
+                onClick={cancelEdit}
+                className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Users List */}
       <div className="bg-white rounded-lg shadow">
         <div className="p-6 border-b">
@@ -254,12 +397,19 @@ export default function UsersPage() {
 
                 <div className="flex items-center gap-4">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    user.role === 'admin' 
-                      ? 'bg-purple-100 text-purple-800' 
+                    user.role === 'admin'
+                      ? 'bg-purple-100 text-purple-800'
                       : 'bg-gray-100 text-gray-800'
                   }`}>
                     {user.role === 'admin' ? 'Administrator' : 'Staff Member'}
                   </span>
+
+                  <button
+                    onClick={() => handleEditUser(user)}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <Edit size={20} />
+                  </button>
 
                   {user.id !== currentUser?.id && (
                     <button
