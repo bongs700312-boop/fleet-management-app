@@ -43,16 +43,13 @@ export default function Sidebar() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check for logged in user
+    // Check for logged in user and set role
     const userStr = localStorage.getItem('currentUser')
     if (userStr) {
       const user = JSON.parse(userStr)
       setUserRole(user.role)
-    } else {
-      // Redirect to login if not logged in
-      window.location.href = '/login'
     }
-  }, [pathname]) // Only depend on pathname to re-check on route changes
+  }, []) // Only run once on mount
 
   // Filter navigation based on user role
   const navigation = allNavigation.filter(item => 
