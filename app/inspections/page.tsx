@@ -110,6 +110,7 @@ export default function InspectionsPage() {
                   message={message}
                   setMessage={setMessage}
                   onSuccess={fetchData}
+                  onRefresh={fetchData}
                 />
               ) : (
                 <CheckInForm
@@ -119,6 +120,7 @@ export default function InspectionsPage() {
                   message={message}
                   setMessage={setMessage}
                   onSuccess={fetchData}
+                  onRefresh={fetchData}
                 />
               )}
             </>
@@ -191,7 +193,8 @@ function CheckOutForm({
   setSubmitting,
   message,
   setMessage,
-  onSuccess
+  onSuccess,
+  onRefresh
 }: {
   bookings: Booking[]
   vehicles: Vehicle[]
@@ -200,6 +203,7 @@ function CheckOutForm({
   message: { type: 'success' | 'error', text: string } | null
   setMessage: (value: { type: 'success' | 'error', text: string } | null) => void
   onSuccess: () => void
+  onRefresh: () => void
 }) {
   const [formData, setFormData] = useState({
     booking_id: '',
@@ -240,9 +244,19 @@ function CheckOutForm({
 
       if (bookingError) throw bookingError
 
+      // Update vehicle status to booked
+      const { error: vehicleError } = await supabase
+        .from('vehicles')
+        .update({ status: 'booked' })
+        .eq('id', booking.vehicle_id)
+
+      if (vehicleError) throw vehicleError
+
       setMessage({ type: 'success', text: 'Check-out inspection completed successfully!' })
       setFormData({ booking_id: '', inspector_name: '', start_km: '', condition_notes: '' })
       onSuccess()
+      // Refresh data to get updated vehicle status
+      onRefresh()
     } catch (error) {
       console.error('Error submitting check-out:', error)
       setMessage({ type: 'error', text: 'Failed to complete check-out. Please try again.' })
@@ -365,7 +379,8 @@ function CheckInForm({
   setSubmitting,
   message,
   setMessage,
-  onSuccess
+  onSuccess,
+  onRefresh
 }: {
   vehicles: Vehicle[]
   submitting: boolean
@@ -373,6 +388,7 @@ function CheckInForm({
   message: { type: 'success' | 'error', text: string } | null
   setMessage: (value: { type: 'success' | 'error', text: string } | null) => void
   onSuccess: () => void
+  onRefresh: () => void
 }) {
   const [formData, setFormData] = useState({
     vehicle_id: '',
@@ -434,6 +450,8 @@ function CheckInForm({
       setMessage({ type: 'success', text: 'Check-in inspection completed successfully! Vehicle mileage updated.' })
       setFormData({ vehicle_id: '', inspector_name: '', end_km: '', issues_found: '', post_trip_notes: '' })
       onSuccess()
+      // Refresh data to get updated vehicle status
+      onRefresh()
     } catch (error) {
       console.error('Error submitting check-in:', error)
       setMessage({ type: 'error', text: 'Failed to complete check-in. Please try again.' })
