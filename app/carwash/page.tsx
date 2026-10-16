@@ -57,11 +57,14 @@ export default function CarwashPage() {
     setMessage(null)
 
     try {
+      // Sanitize cost - remove any non-numeric characters except decimal point
+      const sanitizedCost = parseFloat(String(formData.cost).replace(/[^0-9.]/g, ''))
+
       const { error } = await supabase.from('carwashes').insert({
         vehicle_id: formData.vehicle_id,
         staff_name: formData.staff_name,
         wash_date: formData.wash_date,
-        cost: Number(formData.cost),
+        cost: sanitizedCost,
         notes: formData.notes
       })
 

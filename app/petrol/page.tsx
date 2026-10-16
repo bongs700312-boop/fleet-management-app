@@ -72,13 +72,16 @@ export default function PetrolPage() {
     setMessage(null)
 
     try {
+      // Sanitize amount - remove any non-numeric characters except decimal point
+      const sanitizedAmount = parseFloat(String(formData.amount).replace(/[^0-9.]/g, ''))
+
       const { error } = await supabase
         .from('petrol_fillups')
         .insert({
           vehicle_id: formData.vehicle_id,
           staff_name: formData.staff_name,
           fillup_date: formData.fillup_date,
-          amount: Number(formData.amount),
+          amount: sanitizedAmount,
           liters: Number(formData.liters),
           price_per_liter: Number(formData.price_per_liter),
           odometer_reading: Number(formData.odometer_reading),

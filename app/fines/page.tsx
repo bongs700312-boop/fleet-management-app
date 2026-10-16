@@ -57,12 +57,15 @@ export default function FinesPage() {
     setMessage(null)
 
     try {
+      // Sanitize amount - remove any non-numeric characters except decimal point
+      const sanitizedAmount = parseFloat(String(formData.amount).replace(/[^0-9.]/g, ''))
+
       // Create fine record
       const { data: fineData, error: fineError } = await supabase.from('fines').insert({
         vehicle_id: formData.vehicle_id,
         staff_email: formData.staff_email,
         fine_date: formData.fine_date,
-        amount: Number(formData.amount),
+        amount: sanitizedAmount,
         reason: formData.reason,
         status: 'pending'
       }).select()
