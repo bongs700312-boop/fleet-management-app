@@ -25,6 +25,9 @@ export default function FinesPage() {
     reason: ''
   })
 
+  const [editingPaymentDate, setEditingPaymentDate] = useState<string | null>(null)
+  const [paymentDateInput, setPaymentDateInput] = useState('')
+
   const supabase = createClient()
 
   useEffect(() => {
@@ -67,7 +70,8 @@ export default function FinesPage() {
         fine_date: formData.fine_date,
         amount: sanitizedAmount,
         reason: formData.reason,
-        status: 'pending'
+        status: 'pending',
+        payment_date: null
       }).select()
 
       if (fineError) throw fineError
@@ -104,6 +108,26 @@ export default function FinesPage() {
       setMessage({ type: 'error', text: 'Failed to log fine. Please try again.' })
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function handleUpdateStatus(fineId: string, newStatus: 'pending' | 'paid' | 'disputed', paymentDate?: string) {
+    try {
+      const updateData: any = { status: newStatus }
+      if (newStatus === 'paid') {
+        updateData.payment_date = paymentDate || new Date().toISOString().split('T')[0]
+      } else {
+        updateData.payment_date = null
+      }
+
+      const { error } = await supabase.from('fines').update(updateData).eq('id', fineId)
+      if (error) throw error
+
+      setMessage({ type: 'success', text: 'Fine status updated successfully.' })
+      fetchData()
+    } catch (error) {
+      console.error('Error updating fine status:', error)
+      setMessage({ type: 'error', text: 'Failed to update fine status.' })
     }
   }
 
@@ -318,6 +342,58 @@ export default function FinesPage() {
                         </p>
                         <p className="text-sm text-gray-600">Staff: {fine.staff_email}</p>
                         <p className="text-sm text-gray-500 mt-1">{fine.reason}</p>
+                        {fine.payment_date && (
+                          <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
+                            <Calendar size={14} />
+                            Paid on: {new Date(fine.payment_date).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2 ml-4">
+                        <select
+                          value={fine.status}
+                          onChange={(e) => {
+                            const newStatus = e.target.value as 'pending' | 'paid' | 'disputed'
+                            if (newStatus === 'paid') {
+                              setEditingPaymentDate(fine.id)
+                              setPaymentDateInput(new Date().toISOString().split('T')[0])
+                            } else {
+                              handleUpdateStatus(fine.id, newStatus)
+                            }
+                          }}
+                          className="text-sm border border-gray-300 rounded px-2 py-1"
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="paid">Paid</option>
+                          <option value="disputed">Disputed</option>
+                        </select>
+                        {editingPaymentDate === fine.id && (
+                          <div className="flex flex-col gap-1">
+                            <input
+                              type="date"
+                              value={paymentDateInput}
+                              onChange={(e) => setPaymentDateInput(e.target.value)}
+                              className="text-sm border border-gray-300 rounded px-2 py-1"
+                            />
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => {
+                                  handleUpdateStatus(fine.id, 'paid', paymentDateInput)
+                                  setEditingPaymentDate(null)
+                                }}
+                                className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => setEditingPaymentDate(null)}
+                                className="text-xs bg-gray-300 text-gray-700 px-2 py-1 rounded hover:bg-gray-400"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

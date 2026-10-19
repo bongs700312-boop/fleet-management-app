@@ -200,6 +200,7 @@ export type Database = {
           amount: number
           reason: string
           status: 'pending' | 'paid' | 'disputed'
+          payment_date: string | null
           created_at: string
           updated_at: string
         }
@@ -211,6 +212,7 @@ export type Database = {
           amount: number
           reason: string
           status?: 'pending' | 'paid' | 'disputed'
+          payment_date?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -222,6 +224,7 @@ export type Database = {
           amount?: number
           reason?: string
           status?: 'pending' | 'paid' | 'disputed'
+          payment_date?: string | null
           created_at?: string
           updated_at?: string
         }
