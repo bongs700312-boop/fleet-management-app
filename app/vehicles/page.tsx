@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
-import { Car, Plus, Wrench, AlertTriangle, CheckCircle, Edit, Calendar, Gauge } from 'lucide-react'
+import { Car, Plus, Wrench, AlertTriangle, CheckCircle, Edit, Calendar, Gauge, History, Wallet, X } from 'lucide-react'
 import { useRequireAdmin } from '@/lib/auth'
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
+type ServiceRecord = Database['public']['Tables']['service_records']['Row']
 
-type ViewMode = 'list' | 'add' | 'edit'
+type ViewMode = 'list' | 'add' | 'edit' | 'service_history' | 'add_service'
 
 export default function VehiclesPage() {
   const { user, loading: authLoading } = useRequireAdmin()
@@ -17,6 +18,7 @@ export default function VehiclesPage() {
   const [loading, setLoading] = useState(true)
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [serviceRecords, setServiceRecords] = useState<ServiceRecord[]>([])
 
   const supabase = createClient()
 
@@ -34,6 +36,21 @@ export default function VehiclesPage() {
       setMessage({ type: 'error', text: 'Failed to load vehicles. Please try again.' })
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function fetchServiceRecords(vehicleId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('service_records')
+        .select('*')
+        .eq('vehicle_id', vehicleId)
+        .order('service_date', { ascending: false })
+      if (error) throw error
+      setServiceRecords(data || [])
+    } catch (error) {
+      console.error('Error fetching service records:', error)
+      setMessage({ type: 'error', text: 'Failed to load service records.' })
     }
   }
 
@@ -102,6 +119,11 @@ export default function VehiclesPage() {
             setSelectedVehicle(vehicle)
             setViewMode('edit')
           }}
+          onViewServiceHistory={(vehicle) => {
+            setSelectedVehicle(vehicle)
+            fetchServiceRecords(vehicle.id)
+            setViewMode('service_history')
+          }}
         />
       )}
 
@@ -135,6 +157,34 @@ export default function VehiclesPage() {
           setMessage={setMessage}
         />
       )}
+
+      {viewMode === 'service_history' && selectedVehicle && (
+        <ServiceHistory
+          vehicle={selectedVehicle}
+          serviceRecords={serviceRecords}
+          onAddService={() => setViewMode('add_service')}
+          onBack={() => {
+            setViewMode('list')
+            setSelectedVehicle(null)
+            setServiceRecords([])
+          }}
+          setMessage={setMessage}
+          fetchServiceRecords={() => fetchServiceRecords(selectedVehicle.id)}
+        />
+      )}
+
+      {viewMode === 'add_service' && selectedVehicle && (
+        <AddServiceForm
+          vehicle={selectedVehicle}
+          onSuccess={() => {
+            setViewMode('service_history')
+            fetchServiceRecords(selectedVehicle.id)
+            setMessage({ type: 'success', text: 'Service record added successfully!' })
+          }}
+          onCancel={() => setViewMode('service_history')}
+          setMessage={setMessage}
+        />
+      )}
     </div>
   )
 }
@@ -143,12 +193,14 @@ function VehicleList({
   vehicles,
   needsService,
   isOverdueService,
-  onEdit
+  onEdit,
+  onViewServiceHistory
 }: {
   vehicles: Vehicle[]
   needsService: (vehicle: Vehicle) => boolean
   isOverdueService: (vehicle: Vehicle) => boolean
   onEdit: (vehicle: Vehicle) => void
+  onViewServiceHistory: (vehicle: Vehicle) => void
 }) {
   const serviceNeededCount = vehicles.filter(v => needsService(v)).length
   const overdueCount = vehicles.filter(v => isOverdueService(v)).length
@@ -287,12 +339,22 @@ function VehicleList({
                         </div>
                       )}
                     </div>
-                    <button
-                      onClick={() => onEdit(vehicle)}
-                      className="ml-4 p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    >
-                      <Edit size={20} />
-                    </button>
+                    <div className="flex gap-2 ml-4">
+                      <button
+                        onClick={() => onViewServiceHistory(vehicle)}
+                        className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title="View Service History"
+                      >
+                        <History size={20} />
+                      </button>
+                      <button
+                        onClick={() => onEdit(vehicle)}
+                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit Vehicle"
+                      >
+                        <Edit size={20} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )
@@ -544,6 +606,252 @@ function VehicleForm({
             className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             {submitting ? 'Saving...' : mode === 'add' ? 'Add Vehicle' : 'Update Vehicle'}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+function ServiceHistory({
+  vehicle,
+  serviceRecords,
+  onAddService,
+  onBack,
+  setMessage,
+  fetchServiceRecords
+}: {
+  vehicle: Vehicle
+  serviceRecords: ServiceRecord[]
+  onAddService: () => void
+  onBack: () => void
+  setMessage: (value: { type: 'success' | 'error', text: string } | null) => void
+  fetchServiceRecords: () => void
+}) {
+  const supabase = createClient()
+
+  async function handleDeleteService(recordId: string) {
+    if (!confirm('Are you sure you want to delete this service record?')) return
+
+    try {
+      const { error } = await supabase.from('service_records').delete().eq('id', recordId)
+      if (error) throw error
+      setMessage({ type: 'success', text: 'Service record deleted successfully!' })
+      fetchServiceRecords()
+    } catch (error) {
+      console.error('Error deleting service record:', error)
+      setMessage({ type: 'error', text: 'Failed to delete service record.' })
+    }
+  }
+
+  const totalCost = serviceRecords.reduce((sum, record) => sum + record.service_cost, 0)
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Service History</h2>
+          <p className="text-gray-600 mt-1">
+            {vehicle.year} {vehicle.make} {vehicle.model} ({vehicle.license_plate})
+          </p>
+        </div>
+        <button
+          onClick={onBack}
+          className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          Back to Vehicles
+        </button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-semibold">Service Records</h3>
+            <p className="text-sm text-gray-600">Total Records: {serviceRecords.length}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="bg-green-50 px-4 py-2 rounded-lg">
+              <p className="text-sm text-gray-600">Total Cost</p>
+              <p className="text-xl font-bold text-green-600">R {totalCost.toFixed(2)}</p>
+            </div>
+            <button
+              onClick={onAddService}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <Plus size={20} />
+              Add Service Record
+            </button>
+          </div>
+        </div>
+
+        {serviceRecords.length === 0 ? (
+          <div className="text-center py-8 text-gray-600">
+            <History size={48} className="mx-auto mb-4 text-gray-400" />
+            <p>No service records found for this vehicle.</p>
+            <button
+              onClick={onAddService}
+              className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Add the first service record
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {serviceRecords.map((record) => (
+              <div key={record.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-semibold text-gray-900">{record.service_type}</span>
+                      <span className="text-sm text-gray-500">
+                        {new Date(record.service_date).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Wallet size={16} className="text-green-600" />
+                      <span className="font-medium text-green-600">R {record.service_cost.toFixed(2)}</span>
+                    </div>
+                    {record.service_notes && (
+                      <p className="text-sm text-gray-600 mt-2">{record.service_notes}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleDeleteService(record.id)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete Service Record"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function AddServiceForm({
+  vehicle,
+  onSuccess,
+  onCancel,
+  setMessage
+}: {
+  vehicle: Vehicle
+  onSuccess: () => void
+  onCancel: () => void
+  setMessage: (value: { type: 'success' | 'error', text: string } | null) => void
+}) {
+  const [formData, setFormData] = useState({
+    service_date: new Date().toISOString().split('T')[0],
+    service_type: '',
+    service_cost: '',
+    service_notes: ''
+  })
+  const [submitting, setSubmitting] = useState(false)
+
+  const supabase = createClient()
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setSubmitting(true)
+    setMessage(null)
+
+    try {
+      const cost = Number(formData.service_cost.replace(/[^0-9.]/g, ''))
+      const { error } = await supabase.from('service_records').insert({
+        vehicle_id: vehicle.id,
+        service_date: formData.service_date,
+        service_type: formData.service_type,
+        service_cost: cost,
+        service_notes: formData.service_notes || null
+      })
+
+      if (error) throw error
+      onSuccess()
+    } catch (error) {
+      console.error('Error adding service record:', error)
+      setMessage({ type: 'error', text: 'Failed to add service record. Please try again.' })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h2 className="text-xl font-semibold mb-6">Add Service Record</h2>
+      <p className="text-gray-600 mb-4">
+        {vehicle.year} {vehicle.make} {vehicle.model} ({vehicle.license_plate})
+      </p>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Service Date</label>
+            <input
+              type="date"
+              required
+              value={formData.service_date}
+              onChange={(e) => setFormData({ ...formData, service_date: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Service Type</label>
+            <input
+              type="text"
+              required
+              placeholder="e.g., Oil Change, Brake Service, etc."
+              value={formData.service_type}
+              onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Service Cost (R)</label>
+          <div className="relative">
+            <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="number"
+              required
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              value={formData.service_cost}
+              onChange={(e) => setFormData({ ...formData, service_cost: e.target.value })}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Service Notes</label>
+          <textarea
+            rows={3}
+            placeholder="Additional details about the service..."
+            value={formData.service_notes}
+            onChange={(e) => setFormData({ ...formData, service_notes: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+
+        <div className="flex gap-4 pt-4">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            {submitting ? 'Adding...' : 'Add Service Record'}
           </button>
           <button
             type="button"

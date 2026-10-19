@@ -302,6 +302,38 @@ export type Database = {
           updated_at?: string
         }
       }
+      service_records: {
+        Row: {
+          id: string
+          vehicle_id: string
+          service_date: string
+          service_type: string
+          service_cost: number
+          service_notes: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          vehicle_id: string
+          service_date: string
+          service_type: string
+          service_cost: number
+          service_notes?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          vehicle_id?: string
+          service_date?: string
+          service_type?: string
+          service_cost?: number
+          service_notes?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [key: string]: {
