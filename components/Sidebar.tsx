@@ -24,7 +24,7 @@ import {
 const allNavigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard, role: 'admin' },
   { name: 'Book a Vehicle', href: '/rules-booking', icon: BookOpen, role: 'all' },
-  { name: 'My Pending Bookings', href: '/my-bookings', icon: Mail, role: 'all' },
+  { name: 'My Bookings', href: '/my-bookings', icon: Mail, role: 'all' },
   { name: 'Booking Calendar', href: '/calendar', icon: CalendarIcon, role: 'all' },
   { name: 'Booking Management', href: '/bookings', icon: Calendar, role: 'admin' },
   { name: 'Check-In/out Inspections', href: '/inspections', icon: ClipboardCheck, role: 'admin' },

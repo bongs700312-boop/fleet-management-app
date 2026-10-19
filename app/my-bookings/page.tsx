@@ -67,14 +67,14 @@ export default function MyBookingsPage() {
         .from('bookings')
         .select('*, vehicles(*)')
         .eq('user_email', email)
-        .in('status', ['pending'])
+        .in('status', ['pending', 'approved'])
         .order('created_at', { ascending: false })
 
       if (error) throw error
       setBookings(data || [])
 
       if (data && data.length === 0) {
-        setMessage({ type: 'error', text: 'No pending bookings found for this email' })
+        setMessage({ type: 'error', text: 'No bookings found for this email' })
       }
     } catch (error) {
       console.error('Error fetching bookings:', error)
@@ -106,8 +106,10 @@ export default function MyBookingsPage() {
 
       if (existingBookings && existingBookings.length > 0) {
         for (const booking of existingBookings) {
-          if (booking.id === editingBooking.id) continue // Skip current booking
-          
+          // Skip current booking and skip if booking is not active
+          if (booking.id === editingBooking.id) continue
+          if (!['pending', 'approved', 'in_progress'].includes(booking.status)) continue
+
           const bookingStart = new Date(`${booking.start_date}T${(booking as any).start_time || '09:00'}`)
           const bookingEnd = new Date(`${booking.end_date}T${(booking as any).end_time || '17:00'}`)
 
@@ -205,8 +207,8 @@ export default function MyBookingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">My Pending Bookings</h1>
-        <p className="text-gray-600 mt-2">View and manage your pending vehicle bookings</p>
+        <h1 className="text-3xl font-bold text-gray-900">My Bookings</h1>
+        <p className="text-gray-600 mt-2">View and manage your vehicle bookings (pending and approved)</p>
       </div>
 
       {/* Email Input */}
@@ -401,18 +403,28 @@ export default function MyBookingsPage() {
                         <strong>To:</strong> {new Date(booking.end_date).toLocaleDateString()} at {(booking as any).end_time || '17:00'}
                       </p>
                       <p>
-                        <strong>Status:</strong> <span className="text-yellow-600 font-medium">Pending</span>
+                        <strong>Status:</strong> <span className={`font-medium ${
+                          booking.status === 'pending' ? 'text-yellow-600' :
+                          booking.status === 'approved' ? 'text-green-600' :
+                          booking.status === 'rejected' ? 'text-red-600' :
+                          booking.status === 'in_progress' ? 'text-blue-600' :
+                          'text-gray-600'
+                        }`}>
+                          {booking.status.charAt(0).toUpperCase() + booking.status.slice(1).replace('_', ' ')}
+                        </span>
                       </p>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEditBooking(booking)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Edit booking"
-                    >
-                      <Edit size={18} />
-                    </button>
+                    {booking.status === 'pending' && (
+                      <button
+                        onClick={() => handleEditBooking(booking)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit booking"
+                      >
+                        <Edit size={18} />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleCancelBooking(booking.id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
