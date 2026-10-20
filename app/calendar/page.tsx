@@ -30,7 +30,7 @@ export default function CalendarPage() {
     try {
       const year = currentDate.getFullYear()
       const month = currentDate.getMonth()
-      
+
       // Get first and last day of the month
       const firstDay = new Date(year, month, 1)
       const lastDay = new Date(year, month + 1, 0)
@@ -46,8 +46,9 @@ export default function CalendarPage() {
             license_plate
           )
         `)
-        .gte('start_date', firstDay.toISOString().split('T')[0])
-        .lte('start_date', lastDay.toISOString().split('T')[0])
+        // Fetch bookings that overlap with the current month
+        // Either start date is in the month, or end date is in the month, or the month is between start and end
+        .or(`start_date.lte.${lastDay.toISOString().split('T')[0]},end_date.gte.${firstDay.toISOString().split('T')[0]}`)
         .order('start_date', { ascending: true })
 
       if (error) throw error
@@ -72,7 +73,10 @@ export default function CalendarPage() {
 
   function getBookingsForDay(day: number) {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-    return bookings.filter(b => b.start_date === dateStr)
+    return bookings.filter(b => {
+      // Check if the current day falls within the booking date range
+      return dateStr >= b.start_date && dateStr <= b.end_date
+    })
   }
 
   function getStatusColor(status: string) {
