@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
-import { ClipboardCheck, Car, User, Gauge, AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
+import { ClipboardCheck, Car, User, Gauge, AlertTriangle, CheckCircle, XCircle, Fuel } from 'lucide-react'
 import { useRequireAdmin } from '@/lib/auth'
 
 type Booking = Database['public']['Tables']['bookings']['Row']
@@ -163,6 +163,9 @@ export default function InspectionsPage() {
                       {inspection.end_km && (
                         <p className="text-sm text-gray-600">End KM: {inspection.end_km}</p>
                       )}
+                      {(inspection as any).petrol_level && (
+                        <p className="text-sm text-gray-600">Petrol Level: {(inspection as any).petrol_level}</p>
+                      )}
                       {inspection.condition_notes && (
                         <p className="text-sm text-gray-600 mt-1">Notes: {inspection.condition_notes}</p>
                       )}
@@ -209,6 +212,7 @@ function CheckOutForm({
     booking_id: '',
     inspector_name: '',
     start_km: '',
+    petrol_level: '',
     condition_notes: ''
   })
 
@@ -230,6 +234,7 @@ function CheckOutForm({
         inspection_type: 'pre_trip',
         inspector_name: formData.inspector_name,
         start_km: Number(formData.start_km),
+        petrol_level: formData.petrol_level || null,
         condition_notes: formData.condition_notes,
         issues_found: ''
       })
@@ -253,7 +258,7 @@ function CheckOutForm({
       if (vehicleError) throw vehicleError
 
       setMessage({ type: 'success', text: 'Check-out inspection completed successfully!' })
-      setFormData({ booking_id: '', inspector_name: '', start_km: '', condition_notes: '' })
+      setFormData({ booking_id: '', inspector_name: '', start_km: '', petrol_level: '', condition_notes: '' })
       onSuccess()
       // Refresh data to get updated vehicle status
       onRefresh()
@@ -333,6 +338,22 @@ function CheckOutForm({
             placeholder="Enter starting kilometers"
             value={formData.start_km}
             onChange={(e) => setFormData({ ...formData, start_km: e.target.value })}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Petrol Level (Optional)
+        </label>
+        <div className="relative">
+          <Fuel className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+          <input
+            type="text"
+            placeholder="e.g., Half full, Quarter, 3/4 full"
+            value={formData.petrol_level}
+            onChange={(e) => setFormData({ ...formData, petrol_level: e.target.value })}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>

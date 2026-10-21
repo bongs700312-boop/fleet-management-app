@@ -161,6 +161,7 @@ export type Database = {
           end_km: number | null
           condition_notes: string
           issues_found: string
+          petrol_level: string | null
           created_at: string
           updated_at: string
         }
@@ -174,6 +175,7 @@ export type Database = {
           end_km?: number | null
           condition_notes: string
           issues_found: string
+          petrol_level?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -187,6 +189,7 @@ export type Database = {
           end_km?: number | null
           condition_notes?: string
           issues_found?: string
+          petrol_level?: string | null
           created_at?: string
           updated_at?: string
         }
