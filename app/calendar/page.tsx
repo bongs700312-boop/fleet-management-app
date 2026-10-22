@@ -223,7 +223,7 @@ export default function CalendarPage() {
             return (
               <div
                 key={day}
-                className={`h-24 border rounded-lg p-2 overflow-hidden cursor-pointer hover:shadow-md transition-shadow ${
+                className={`h-32 border rounded-lg p-2 overflow-y-auto cursor-pointer hover:shadow-md transition-shadow ${
                   isToday ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
                 }`}
                 onClick={() => dayBookings.length > 0 && setSelectedBooking(dayBookings[0])}
@@ -232,7 +232,7 @@ export default function CalendarPage() {
                   {day}
                 </div>
                 <div className="space-y-1">
-                  {dayBookings.slice(0, 2).map((booking) => (
+                  {dayBookings.map((booking) => (
                     <div
                       key={booking.id}
                       className={`text-xs px-1 py-0.5 rounded border ${getStatusColor(booking.status)}`}
@@ -240,11 +240,6 @@ export default function CalendarPage() {
                       {booking.vehicles?.license_plate}
                     </div>
                   ))}
-                  {dayBookings.length > 2 && (
-                    <div className="text-xs text-gray-500">
-                      +{dayBookings.length - 2} more
-                    </div>
-                  )}
                 </div>
               </div>
             )
