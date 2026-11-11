@@ -296,9 +296,12 @@ function CheckOutForm({
           <option value="">Choose a booking...</option>
           {activeBookings.map((booking) => {
             const vehicle = vehicles.find(v => v.id === booking.vehicle_id)
+            const startDate = new Date(booking.start_date).toLocaleDateString()
+            const startTime = (booking as any).start_time || '09:00'
+            const endTime = (booking as any).end_time || '17:00'
             return (
               <option key={booking.id} value={booking.id}>
-                {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model} - ${vehicle.license_plate}` : 'Unknown vehicle'} ({booking.user_email})
+                {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model} - ${vehicle.license_plate}` : 'Unknown vehicle'} - {startDate} ({startTime} - {endTime}) - {booking.user_email}
               </option>
             )
           })}
