@@ -243,6 +243,46 @@ export default function BookingsPage() {
     })
   }
 
+  async function handleCancelBooking(bookingId: string) {
+    if (!confirm('Are you sure you want to cancel this booking?')) return
+
+    setProcessing(bookingId)
+    setMessage(null)
+
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: 'rejected' })
+        .eq('id', bookingId)
+
+      if (error) throw error
+
+      // Send cancellation email
+      const booking = bookings.find(b => b.id === bookingId)
+      const vehicle = vehicles.find(v => v.id === booking?.vehicle_id)
+
+      if (booking && vehicle) {
+        await fetch('/api/email/booking-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            booking,
+            vehicle,
+            status: 'rejected'
+          })
+        })
+      }
+
+      setMessage({ type: 'success', text: 'Booking cancelled successfully. Notification sent to staff member.' })
+      fetchBookings()
+    } catch (error) {
+      console.error('Error cancelling booking:', error)
+      setMessage({ type: 'error', text: 'Failed to cancel booking. Please try again.' })
+    } finally {
+      setProcessing(null)
+    }
+  }
+
   function getStatusColor(status: string) {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800'
@@ -473,6 +513,25 @@ export default function BookingsPage() {
                         <Edit size={18} />
                         Edit
                       </button>
+                      {booking.status !== 'rejected' && (
+                        <button
+                          onClick={() => handleCancelBooking(booking.id)}
+                          disabled={processing === booking.id}
+                          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                        >
+                          {processing === booking.id ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <X size={18} />
+                              Cancel
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
