@@ -272,6 +272,25 @@ function CheckOutForm({
 
   const activeBookings = bookings.filter(b => b.status === 'approved')
 
+  // Group bookings by vehicle and sort by date/time
+  const groupedBookings = activeBookings.reduce((groups, booking) => {
+    const vehicleId = booking.vehicle_id
+    if (!groups[vehicleId]) {
+      groups[vehicleId] = []
+    }
+    groups[vehicleId].push(booking)
+    return groups
+  }, {} as Record<string, typeof activeBookings>)
+
+  // Sort bookings within each group by date and time
+  Object.keys(groupedBookings).forEach(vehicleId => {
+    groupedBookings[vehicleId].sort((a, b) => {
+      const dateA = new Date(`${a.start_date}T${(a as any).start_time || '09:00'}`)
+      const dateB = new Date(`${b.start_date}T${(b as any).start_time || '09:00'}`)
+      return dateA.getTime() - dateB.getTime()
+    })
+  })
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {message && (
@@ -294,15 +313,21 @@ function CheckOutForm({
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">Choose a booking...</option>
-          {activeBookings.map((booking) => {
-            const vehicle = vehicles.find(v => v.id === booking.vehicle_id)
-            const startDate = new Date(booking.start_date).toLocaleDateString()
-            const startTime = (booking as any).start_time || '09:00'
-            const endTime = (booking as any).end_time || '17:00'
+          {Object.entries(groupedBookings).map(([vehicleId, vehicleBookings]) => {
+            const vehicle = vehicles.find(v => v.id === vehicleId)
             return (
-              <option key={booking.id} value={booking.id}>
-                {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model} - ${vehicle.license_plate}` : 'Unknown vehicle'} - {startDate} ({startTime} - {endTime}) - {booking.user_email}
-              </option>
+              <optgroup key={vehicleId} label={vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model} - ${vehicle.license_plate}` : 'Unknown vehicle'}>
+                {vehicleBookings.map((booking) => {
+                  const startDate = new Date(booking.start_date).toLocaleDateString()
+                  const startTime = (booking as any).start_time || '09:00'
+                  const endTime = (booking as any).end_time || '17:00'
+                  return (
+                    <option key={booking.id} value={booking.id}>
+                      {startDate} ({startTime} - {endTime}) - {booking.user_email}
+                    </option>
+                  )
+                })}
+              </optgroup>
             )
           })}
         </select>
