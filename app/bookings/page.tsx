@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Database } from '@/lib/supabase/types'
-import { Calendar, CheckCircle, XCircle, AlertCircle, Car, Mail, Filter, User, FileText } from 'lucide-react'
+import { Calendar, CheckCircle, XCircle, AlertCircle, Car, Mail, Filter, User, FileText, Edit, X } from 'lucide-react'
 import { useRequireAdmin } from '@/lib/auth'
 
 type Booking = Database['public']['Tables']['bookings']['Row']
@@ -17,6 +17,17 @@ export default function BookingsPage() {
   const [processing, setProcessing] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'in_progress' | 'completed'>('all')
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
+  const [editFormData, setEditFormData] = useState({
+    vehicle_id: '',
+    start_date: '',
+    end_date: '',
+    start_time: '09:00',
+    end_time: '17:00',
+    driver_name: '',
+    number_of_passengers: '',
+    trip_description: ''
+  })
 
   const supabase = createClient()
 
@@ -126,6 +137,110 @@ export default function BookingsPage() {
     } finally {
       setProcessing(null)
     }
+  }
+
+  function handleEditBooking(booking: Booking) {
+    setEditingBooking(booking)
+    setEditFormData({
+      vehicle_id: booking.vehicle_id,
+      start_date: booking.start_date,
+      end_date: booking.end_date,
+      start_time: (booking as any).start_time || '09:00',
+      end_time: (booking as any).end_time || '17:00',
+      driver_name: (booking as any).driver_name || '',
+      number_of_passengers: (booking as any).number_of_passengers ? String((booking as any).number_of_passengers) : '',
+      trip_description: (booking as any).trip_description || ''
+    })
+  }
+
+  async function handleUpdateBooking() {
+    if (!editingBooking) return
+
+    setProcessing(editingBooking.id)
+    setMessage(null)
+
+    try {
+      // Check for booking conflicts
+      const { data: existingBookings, error: queryError } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('vehicle_id', editFormData.vehicle_id)
+        .in('status', ['pending', 'approved', 'in_progress'])
+
+      if (queryError) throw queryError
+
+      // Check for date and time overlap (excluding the current booking being edited)
+      const requestedStart = new Date(`${editFormData.start_date}T${editFormData.start_time}`)
+      const requestedEnd = new Date(`${editFormData.end_date}T${editFormData.end_time}`)
+
+      if (existingBookings && existingBookings.length > 0) {
+        for (const booking of existingBookings) {
+          // Skip current booking and skip if booking is not active
+          if (booking.id === editingBooking.id) continue
+          if (!['pending', 'approved', 'in_progress'].includes(booking.status)) continue
+
+          const bookingStart = new Date(`${booking.start_date}T${(booking as any).start_time || '09:00'}`)
+          const bookingEnd = new Date(`${booking.end_date}T${(booking as any).end_time || '17:00'}`)
+
+          if (requestedStart <= bookingEnd && requestedEnd >= bookingStart) {
+            const formattedTime = bookingEnd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+            const formattedDate = bookingEnd.toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })
+
+            setMessage({
+              type: 'error',
+              text: `Vehicle not available for these times. Available from ${formattedDate} at ${formattedTime}`
+            })
+            setProcessing(null)
+            return
+          }
+        }
+      }
+
+      // Update booking
+      const { error: updateError } = await supabase
+        .from('bookings')
+        .update({
+          vehicle_id: editFormData.vehicle_id,
+          start_date: editFormData.start_date,
+          end_date: editFormData.end_date,
+          start_time: editFormData.start_time,
+          end_time: editFormData.end_time,
+          driver_name: editFormData.driver_name || null,
+          number_of_passengers: editFormData.number_of_passengers ? parseInt(editFormData.number_of_passengers) : null,
+          trip_description: editFormData.trip_description || null
+        })
+        .eq('id', editingBooking.id)
+
+      if (updateError) throw updateError
+
+      setMessage({ type: 'success', text: 'Booking updated successfully!' })
+      setEditingBooking(null)
+      fetchBookings()
+    } catch (error) {
+      console.error('Error updating booking:', error)
+      setMessage({ type: 'error', text: 'Failed to update booking. Please try again.' })
+    } finally {
+      setProcessing(null)
+    }
+  }
+
+  function cancelEdit() {
+    setEditingBooking(null)
+    setEditFormData({
+      vehicle_id: '',
+      start_date: '',
+      end_date: '',
+      start_time: '09:00',
+      end_time: '17:00',
+      driver_name: '',
+      number_of_passengers: '',
+      trip_description: ''
+    })
   }
 
   function getStatusColor(status: string) {
@@ -311,45 +426,54 @@ export default function BookingsPage() {
                       </div>
                     </div>
 
-                    {/* Action Buttons for Pending Bookings */}
-                    {booking.status === 'pending' && (
-                      <div className="flex gap-2 ml-4">
-                        <button
-                          onClick={() => handleApprove(booking.id)}
-                          disabled={processing === booking.id}
-                          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-                        >
-                          {processing === booking.id ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                              Processing...
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle size={18} />
-                              Approve
-                            </>
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleReject(booking.id)}
-                          disabled={processing === booking.id}
-                          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-                        >
-                          {processing === booking.id ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                              Processing...
-                            </>
-                          ) : (
-                            <>
-                              <XCircle size={18} />
-                              Reject
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    )}
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 ml-4">
+                      {booking.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(booking.id)}
+                            disabled={processing === booking.id}
+                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                          >
+                            {processing === booking.id ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle size={18} />
+                                Approve
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleReject(booking.id)}
+                            disabled={processing === booking.id}
+                            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                          >
+                            {processing === booking.id ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <XCircle size={18} />
+                                Reject
+                              </>
+                            )}
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => handleEditBooking(booking)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                      >
+                        <Edit size={18} />
+                        Edit
+                      </button>
+                    </div>
                   </div>
                 </div>
               )
@@ -357,6 +481,148 @@ export default function BookingsPage() {
           </div>
         )}
       </div>
+
+      {/* Edit Booking Modal */}
+      {editingBooking && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold">Edit Booking</h2>
+              <button
+                onClick={cancelEdit}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {message && (
+              <div className={`mb-4 p-4 rounded-lg flex items-center gap-2 ${
+                message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+              }`}>
+                {message.type === 'success' ? <CheckCircle size={20} /> : <XCircle size={20} />}
+                <span>{message.text}</span>
+              </div>
+            )}
+
+            <form onSubmit={(e) => { e.preventDefault(); handleUpdateBooking(); }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle</label>
+                <select
+                  required
+                  value={editFormData.vehicle_id}
+                  onChange={(e) => setEditFormData({ ...editFormData, vehicle_id: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {vehicles.map((vehicle) => (
+                    <option key={vehicle.id} value={vehicle.id}>
+                      {vehicle.year} {vehicle.make} {vehicle.model} - {vehicle.license_plate}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={editFormData.start_date}
+                    onChange={(e) => setEditFormData({ ...editFormData, start_date: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={editFormData.end_date}
+                    onChange={(e) => setEditFormData({ ...editFormData, end_date: e.target.value })}
+                    min={editFormData.start_date || new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                  <input
+                    type="time"
+                    required
+                    value={editFormData.start_time}
+                    onChange={(e) => setEditFormData({ ...editFormData, start_time: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                  <input
+                    type="time"
+                    required
+                    value={editFormData.end_time}
+                    onChange={(e) => setEditFormData({ ...editFormData, end_time: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Designated Driver Name</label>
+                <input
+                  type="text"
+                  placeholder="Full name of the driver"
+                  value={editFormData.driver_name}
+                  onChange={(e) => setEditFormData({ ...editFormData, driver_name: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Number of Passengers</label>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="Number of people travelling"
+                  value={editFormData.number_of_passengers}
+                  onChange={(e) => setEditFormData({ ...editFormData, number_of_passengers: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Trip Description</label>
+                <textarea
+                  rows={3}
+                  placeholder="Description of the trip"
+                  value={editFormData.trip_description}
+                  onChange={(e) => setEditFormData({ ...editFormData, trip_description: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="submit"
+                  disabled={processing === editingBooking.id}
+                  className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                >
+                  {processing === editingBooking.id ? 'Updating...' : 'Update Booking'}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
